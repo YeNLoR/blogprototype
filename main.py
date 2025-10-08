@@ -17,8 +17,19 @@ def login():
         username = request.form['username']
         password = request.form['password']
 
-        if username == 'admin' and password == 'admin':
-            return "<p>Merhaba admin</p>"
+        with sqlite3.connect('users.db') as connect:
+            cursor = connect.cursor()
+            cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
+            result = cursor.fetchone()
+            if result is None:
+                return "Başarısız"
+            else:
+                cursor.execute("SELECT password FROM users WHERE username = ?", (username,))
+                passresult = cursor.fetchone()
+                if passresult[0] == password:
+                    return "Başarılı"
+
+
     return flask.render_template('login.html')
 
 @app.route('/register', methods=['GET', 'POST'])
