@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block body %}
+<form method="POST" action="/register">
+    <label for="username">Kullanıcı adı:</label><br>
+    <input type="text" id="username" name="username"><br><br>
+
+    <label for="password">Şifre:</label><br>
+    <input type="text" id="password" name="password"><br><br>
+
+    <label for="password2">Şifre:</label><br>
+    <input type="text" id="password2" name="password2"><br>
+
+    <button id="submit">Giriş yap</button><br><br>
+</form>
+{% endblock %}
