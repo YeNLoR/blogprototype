@@ -6,6 +6,7 @@ from flask import request
 
 app = flask.Flask(__name__)
 
+app.config['SECRET_KEY'] = 'LFFV3RFHLDl'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -14,13 +15,17 @@ db = flask_sqlalchemy.SQLAlchemy(app)
 login_manager = flask_login.LoginManager()
 login_manager.init_app(app)
 
-class Users(db.Model):
+class Users(db.Model, flask_login.UserMixin):
     email = db.Column(db.String(32), unique=True)
     username = db.Column(db.String(16), nullable=False, primary_key=True)
     password = db.Column(db.String(16), nullable=False)
+    salt = db.Column(db.String(16), nullable=False)
     register_date = db.Column(db.DateTime, nullable=False)
     posts = db.relationship('Posts', backref='author', lazy='dynamic')
     comments = db.relationship('Comments', backref='author', lazy='dynamic')
+
+    def get_id(self):
+        return str(self.username)
 
 class Posts(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -39,27 +44,9 @@ class Comments(db.Model):
     author_username = db.Column(db.String(16), db.ForeignKey('users.username'), nullable=False)
     post_id = db.Column(db.Integer, db.ForeignKey('posts.id'), nullable=False)
 
-class CurrentUser(flask_login.UserMixin):
-    pass
-
 @login_manager.user_loader
-def user_loader(username):
-    if username not in Users.query.value("username"):
-        return
-    user = CurrentUser()
-    user.id = username
-    return user
-
-@login_manager.request_loader
-def request_loader(request):
-    username = request.form.get('username')
-
-    if username not in Users.query.value("username"):
-        return
-
-    user = CurrentUser()
-    user.username = username
-    return user
+def load_user(user_id):
+    return Users.query.get(str(user_id))
 
 @app.route('/')
 def index():
@@ -70,6 +57,11 @@ def login():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
+
+        user = Users.query.filter_by(username=username).first()
+        if user and password == user.password:
+            flask_login.login_user(user, remember=True)
+            return flask.redirect(flask.url_for('profile'))
 
     return flask.render_template('login.html', TITLE='Giriş yap')
 
@@ -89,6 +81,11 @@ def register():
             db.session.add(u)
             db.session.commit()
     return flask.render_template('register.html', TITLE='Kayıt ol')
+
+@app.route('/profile')
+@flask_login.login_required
+def profile():
+    return flask.render_template('profile.html', username=flask_login.current_user.username)
 
 if __name__ == '__main__':
     with app.app_context():
