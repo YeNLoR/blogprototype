@@ -1,7 +1,6 @@
 {% extends 'base.html' %}
 {% block body %}
-<a href="/register">Kayıt OL</a>
-<a href="/login">Giriş Yap</a>
-<a href="/post">Blog Oluştur</a>
-<a href="/profile">Profil</a>
+{% for post in posts %}
+<a href="/post/{{ post.id }}"> {{ post.title }}</a> <br>
+{% endfor %}
 {% endblock %}

@@ -6,7 +6,25 @@
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-{% block body %}
-{% endblock %}
+<header>
+    <a href="/">Ana Sayfa</a>
+    {% if not logged_in %}
+    <a href="/register">Kayıt OL</a>
+    <a href="/login">Giriş Yap</a>
+
+    {% else %}
+    <a href="/post">Blog Oluştur</a>
+    <a href="/profile">Profil</a>
+    <a href="/logout">Çıkış Yap</a>
+    {% endif %}
+    <hr>
+</header>
+<main>
+    {% block body %}
+    {% endblock %}
+</main>
+<footer>
+    <hr>
+</footer>
 </body>
 </html>

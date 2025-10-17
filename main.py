@@ -1,5 +1,3 @@
-import uuid
-
 import flask
 import flask_sqlalchemy
 import flask_login
@@ -30,7 +28,7 @@ class Users(db.Model, flask_login.UserMixin):
         return str(self.username)
 
 class Posts(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.String(64), primary_key=True)
     title = db.Column(db.String(64), nullable=False)
     content = db.Column(db.Text, nullable=False)
     date_posted = db.Column(db.DateTime, nullable=False)
@@ -50,10 +48,15 @@ class Comments(db.Model):
 def load_user(user_id):
     return Users.query.get(str(user_id))
 
+@app.context_processor
+def inject_user_status():
+    return dict(logged_in=flask_login.current_user.is_authenticated)
 @app.route('/')
 def index():
+    latest_posts = Posts.query.order_by(Posts.date_posted.desc()).limit(12)
     return flask.render_template('index.html',
-                                 TITLE = "Benim Ultra Mega Güzel Blog Prototipim")
+                                 TITLE = "Benim Ultra Mega Güzel Blog Prototipim",
+                                 posts=latest_posts)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -68,6 +71,11 @@ def login():
 
     return flask.render_template('login.html',
                                  TITLE='Giriş yap')
+
+@app.route('/logout')
+def logout():
+    flask_login.logout_user()
+    return flask.redirect(flask.url_for('index'))
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -105,6 +113,7 @@ def post():
         if len(content) > 0 and len(title) > 0:
             post = Posts()
             post.title = title
+            post.id = title.strip()
             post.content = content
             post.date_posted = datetime.datetime.now()
             post.author_username = flask_login.current_user.username
@@ -114,6 +123,16 @@ def post():
     return flask.render_template('post.html',
                                  TITLE = 'Post Oluştur',
                                  user=flask_login.current_user.username)
+
+@app.route('/post/<id>', methods=['GET','POST'])
+def show_post(id):
+    post = Posts.query.get(id)
+    if post is None:
+        flask.abort(404)
+    else:
+        return flask.render_template('show_post.html',
+                                     post=post)
+
 
 if __name__ == '__main__':
     with app.app_context():

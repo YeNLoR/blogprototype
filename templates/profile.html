@@ -2,6 +2,6 @@
 {% block body %}
 Hoşgeldin {{ username }}<br><br>
 {% for post in posts %}
-{{ post.title }} <br>
+<a href="/post/{{ post.id }}"> {{ post.title }}</a> <br>
 {% endfor %}
 {% endblock %}
