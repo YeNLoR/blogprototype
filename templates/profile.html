@@ -1,4 +1,7 @@
 {% extends 'base.html' %}
 {% block body %}
-Hoşgeldin {{ username }}
+Hoşgeldin {{ username }}<br><br>
+{% for post in posts %}
+{{ post.title }} <br>
+{% endfor %}
 {% endblock %}

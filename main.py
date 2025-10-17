@@ -1,3 +1,5 @@
+import uuid
+
 import flask
 import flask_sqlalchemy
 import flask_login
@@ -77,6 +79,7 @@ def register():
             u.username = username
             u.email = email
             u.password = password
+            u.salt = 1
             u.register_date = datetime.datetime.now()
             db.session.add(u)
             db.session.commit()
@@ -85,7 +88,26 @@ def register():
 @app.route('/profile')
 @flask_login.login_required
 def profile():
-    return flask.render_template('profile.html', username=flask_login.current_user.username)
+    return flask.render_template('profile.html',
+                                 username=flask_login.current_user.username,
+                                 posts=Posts.query.filter_by(author_username=flask_login.current_user.username).all())
+
+@app.route('/post', methods=['GET','POST'])
+@flask_login.login_required
+def post():
+    if request.method == 'POST':
+        title = request.form['title']
+        content = request.form['content']
+        if len(content) > 0 and len(title) > 0:
+            post = Posts()
+            post.title = title
+            post.content = content
+            post.date_posted = datetime.datetime.now()
+            post.author_username = flask_login.current_user.username
+            db.session.add(post)
+            db.session.commit()
+
+    return flask.render_template('post.html', user=flask_login.current_user.username    )
 
 if __name__ == '__main__':
     with app.app_context():

@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block body %}
+<form method="POST" action="/post">
+    <label for="title">Başlık</label><br>
+    <input type="text" id="title" name="title"><br>
+    <label for="content" >Merhaba {{ user }}</label><br>
+    <textarea id="content" name="content"></textarea><br>
+    <button id="submit">Paylaş</button>
+</form>
+{% endblock %}
