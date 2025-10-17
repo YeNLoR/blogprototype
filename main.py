@@ -52,7 +52,8 @@ def load_user(user_id):
 
 @app.route('/')
 def index():
-    return flask.render_template('index.html', post_list=Posts.query.all())
+    return flask.render_template('index.html',
+                                 TITLE = "Benim Ultra Mega Güzel Blog Prototipim")
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -65,7 +66,8 @@ def login():
             flask_login.login_user(user, remember=True)
             return flask.redirect(flask.url_for('profile'))
 
-    return flask.render_template('login.html', TITLE='Giriş yap')
+    return flask.render_template('login.html',
+                                 TITLE='Giriş yap')
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -83,12 +85,14 @@ def register():
             u.register_date = datetime.datetime.now()
             db.session.add(u)
             db.session.commit()
-    return flask.render_template('register.html', TITLE='Kayıt ol')
+    return flask.render_template('register.html',
+                                 TITLE='Kayıt ol')
 
 @app.route('/profile')
 @flask_login.login_required
 def profile():
     return flask.render_template('profile.html',
+                                 TITLE="Profil",
                                  username=flask_login.current_user.username,
                                  posts=Posts.query.filter_by(author_username=flask_login.current_user.username).all())
 
@@ -107,7 +111,9 @@ def post():
             db.session.add(post)
             db.session.commit()
 
-    return flask.render_template('post.html', user=flask_login.current_user.username    )
+    return flask.render_template('post.html',
+                                 TITLE = 'Post Oluştur',
+                                 user=flask_login.current_user.username)
 
 if __name__ == '__main__':
     with app.app_context():
