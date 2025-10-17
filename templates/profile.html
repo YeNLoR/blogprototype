@@ -2,6 +2,9 @@
 {% block body %}
 Hoşgeldin {{ username }}<br><br>
 {% for post in posts %}
-<a href="/post/{{ post.id }}"> {{ post.title }}</a> <br>
+<a href="/post/{{ post.id }}"> {{ post.title }}</a>
+<form method="POST" style="display:inline">
+    <button type="submit" name="delete" value="{{ post.id }}">Sil</button>
+</form><br>
 {% endfor %}
 {% endblock %}

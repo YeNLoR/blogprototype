@@ -96,9 +96,14 @@ def register():
     return flask.render_template('register.html',
                                  TITLE='Kayıt ol')
 
-@app.route('/profile')
+@app.route('/profile', methods=['GET', 'POST'])
 @flask_login.login_required
 def profile():
+    if "delete" in request.form:
+        post_id = request.form['delete']
+        if flask_login.current_user.username == db.session.query(Posts).filter_by(id=post_id).first().author_username:
+            db.session.delete(Posts.query.get(request.form["delete"]))
+            db.session.commit()
     return flask.render_template('profile.html',
                                  TITLE="Profil",
                                  username=flask_login.current_user.username,
