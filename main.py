@@ -3,6 +3,7 @@ import flask_sqlalchemy
 import flask_login
 import datetime
 from flask import request
+from sqlalchemy.sql.functions import user
 
 app = flask.Flask(__name__)
 
@@ -33,7 +34,6 @@ class Posts(db.Model):
     content = db.Column(db.Text, nullable=False)
     date_posted = db.Column(db.DateTime, nullable=False)
     comments = db.relationship('Comments', backref='post', lazy='dynamic')
-
     author_username = db.Column(db.String(16), db.ForeignKey('users.username'), nullable=False)
 
 class Comments(db.Model):
@@ -99,6 +99,17 @@ def register():
 @app.route('/profile', methods=['GET', 'POST'])
 @flask_login.login_required
 def profile():
+    if "delete_user" in request.form:
+        username = request.form['delete_user']
+        if flask_login.current_user.username == username:
+            for post in Posts.query.filter_by(author_username=username).all():
+                db.session.delete(post)
+            db.session.delete(Users.query.filter_by(username=username).first())
+            flask_login.logout_user()
+            db.session.commit()
+
+
+            return flask.redirect(flask.url_for('index'))
     if "delete" in request.form:
         post_id = request.form['delete']
         if flask_login.current_user.username == db.session.query(Posts).filter_by(id=post_id).first().author_username:
@@ -107,7 +118,18 @@ def profile():
     return flask.render_template('profile.html',
                                  TITLE="Profil",
                                  username=flask_login.current_user.username,
-                                 posts=Posts.query.filter_by(author_username=flask_login.current_user.username).all())
+                                 posts=Posts.query.filter_by(author_username=flask_login.current_user.username).all(),
+                                 admin=True
+    )
+
+@app.route('/profile/<id>', methods=['GET','POST'])
+def show_profile(id):
+    return flask.render_template('profile.html',
+                                 TITLE="Profil",
+                                 username=id,
+                                 posts=Posts.query.filter_by(author_username=id).all(),
+                                 admin=False
+                                 )
 
 @app.route('/post', methods=['GET','POST'])
 @flask_login.login_required

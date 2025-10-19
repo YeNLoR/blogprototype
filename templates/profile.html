@@ -1,10 +1,17 @@
 {% extends 'base.html' %}
 {% block body %}
-Hoşgeldin {{ username }}<br><br>
+<h1>{{ username }}</h1>
+{% if admin %}
+<form method="POST" style="display:inline">
+    <button type="submit" name="delete_user" value="{{ username }}">Sil</button>
+</form><br><br><br>
+{% endif %}
 {% for post in posts %}
 <a href="/post/{{ post.id }}"> {{ post.title }}</a>
+{% if admin %}
 <form method="POST" style="display:inline">
     <button type="submit" name="delete" value="{{ post.id }}">Sil</button>
 </form><br>
+{% endif %}
 {% endfor %}
 {% endblock %}
