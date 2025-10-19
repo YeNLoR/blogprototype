@@ -96,6 +96,8 @@ def register():
     return flask.render_template('register.html',
                                  TITLE='Kayıt ol')
 
+admins = ["YeNLoR", "Mrwn"]
+
 @app.route('/profile', methods=['GET', 'POST'])
 @flask_login.login_required
 def profile():
@@ -124,17 +126,34 @@ def profile():
 
 @app.route('/profile/<id>', methods=['GET','POST'])
 def show_profile(id):
+    admin = False
+    if flask_login.current_user.username in admins:
+        admin = True
+    if "delete_user" in request.form:
+        username = request.form['delete_user']
+        if admin:
+            for post in Posts.query.filter_by(author_username=username).all():
+                db.session.delete(post)
+            db.session.delete(Users.query.filter_by(username=username).first())
+            flask_login.logout_user()
+            db.session.commit()
+            return flask.redirect(flask.url_for('index'))
+    if "delete" in request.form:
+        post_id = request.form['delete']
+        if admin:
+            db.session.delete(Posts.query.get(post_id))
+            db.session.commit()
     return flask.render_template('profile.html',
-                                 TITLE="Profil",
-                                 username=id,
-                                 posts=Posts.query.filter_by(author_username=id).all(),
-                                 admin=False
+                                TITLE="Profil",
+                                username=id,
+                                posts=Posts.query.filter_by(author_username=id).all(),
+                                admin=admin
                                  )
 
 @app.route('/post', methods=['GET','POST'])
 @flask_login.login_required
 def post():
-    if request.method == 'POST':
+    if request.method == 'POST' and "submit" in request.form:
         title = request.form['title']
         content = request.form['content']
         if len(content) > 0 and len(title) > 0:
@@ -146,7 +165,7 @@ def post():
             post.author_username = flask_login.current_user.username
             db.session.add(post)
             db.session.commit()
-
+            return flask.redirect(flask.url_for('index'))
     return flask.render_template('post.html',
                                  TITLE = 'Post Oluştur',
                                  user=flask_login.current_user.username)
