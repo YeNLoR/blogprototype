@@ -1,9 +1,9 @@
+import markdown
 import flask
 import flask_sqlalchemy
 import flask_login
 import datetime
 from flask import request
-from sqlalchemy.sql.functions import user
 
 app = flask.Flask(__name__)
 
@@ -156,6 +156,7 @@ def post():
     if request.method == 'POST' and "submit" in request.form:
         title = request.form['title']
         content = request.form['content']
+        content = markdown.markdown(content)
         if len(content) > 0 and len(title) > 0:
             post = Posts()
             post.title = title
@@ -166,6 +167,7 @@ def post():
             db.session.add(post)
             db.session.commit()
             return flask.redirect(flask.url_for('index'))
+
     return flask.render_template('post.html',
                                  TITLE = 'Post Oluştur',
                                  user=flask_login.current_user.username)

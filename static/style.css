@@ -1,7 +1,8 @@
 body {
-  color: #F8F8F8;
-  background-color: #333333;
-  text-align: center;
+    color: #F8F8F8;
+    background-color: #333333;
+    text-align: center;
+    overflow-wrap: break-word;
 }
 a:link {
     color: turquoise;
