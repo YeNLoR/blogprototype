@@ -1,6 +1,4 @@
 {% extends 'base.html' %}
 {% block body %}
-{% for post in posts %}
-<a href="/post/{{ post.id }}"> {{ post.title }}</a> <br>
-{% endfor %}
+{% include 'post_list.html' %}
 {% endblock %}

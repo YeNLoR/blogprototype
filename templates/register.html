@@ -2,17 +2,17 @@
 {% block body %}
 <form method="POST" action="/register">
     <label for="username">Kullanıcı adı:</label><br>
-    <input type="text" id="username" name="username"><br><br>
+    <input type="text" id="username" name="username" class="form-control"><br>
 
     <label for="email">Email</label><br>
-    <input type="text" id="email" name="email"><br><br>
+    <input type="text" id="email" name="email" class="form-control"><br>
 
     <label for="password">Şifre:</label><br>
-    <input type="text" id="password" name="password"><br><br>
+    <input type="text" id="password" name="password" class="form-control"><br>
 
     <label for="password2">Şifre:</label><br>
-    <input type="text" id="password2" name="password2"><br><br>
+    <input type="text" id="password2" name="password2" class="form-control"><br>
 
-    <button id="submit">Kayıt yap</button><br><br>
+    <button id="submit" class="btn btn-outline-dark" >Kayıt yap</button><br>
 </form>
 {% endblock %}

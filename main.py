@@ -32,6 +32,7 @@ class Posts(db.Model):
     id = db.Column(db.String(64), primary_key=True)
     title = db.Column(db.String(64), nullable=False)
     content = db.Column(db.Text, nullable=False)
+    #tags = db.Column(db.String(64), nullable=False)
     date_posted = db.Column(db.DateTime, nullable=False)
     comments = db.relationship('Comments', backref='post', lazy='dynamic')
     author_username = db.Column(db.String(16), db.ForeignKey('users.username'), nullable=False)
@@ -53,7 +54,7 @@ def inject_user_status():
     return dict(logged_in=flask_login.current_user.is_authenticated)
 @app.route('/')
 def index():
-    latest_posts = Posts.query.order_by(Posts.date_posted.desc()).limit(12)
+    latest_posts = Posts.query.order_by(Posts.date_posted.desc()).limit(24)
     return flask.render_template('index.html',
                                  TITLE = "Benim Ultra Mega Güzel Blog Prototipim",
                                  posts=latest_posts)
@@ -180,7 +181,19 @@ def show_post(id):
     else:
         return flask.render_template('show_post.html',
                                      post=post)
+@app.route('/search', methods=['GET', 'POST'])
+def search():
+    if request.method == 'POST':
+        search = request.form['search']
+        link = "/search/" + search
+        print(link)
+        return flask.redirect(link)
 
+@app.route("/search/<search>")
+def search_title(search):
+    posts = Posts.query.filter(Posts.title.contains(search)).all()
+    return flask.render_template('index.html',
+                                 posts=posts)
 
 if __name__ == '__main__':
     with app.app_context():

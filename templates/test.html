@@ -1,9 +1,8 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 <head>
-    <!--<meta name="viewport" charset="UTF-8" content="width=device-width, initial-scale=1.0">-->
-    <title>{{ TITLE }}</title>
-    <link rel="stylesheet" href="/static/style.css">
+    <meta charset="UTF-8">
+    <title>Title</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
 </head>
@@ -25,7 +24,7 @@
           <a class="nav-link" href="/login">Giriş Yap</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="/register">Kayıt Ol</a>
+          <a class="nav-link" href="/logout">kayıt Ol</a>
         </li>
         {% else %}
         <li class="nav-item">
@@ -39,19 +38,14 @@
         </li>
         {% endif %}
       </ul>
-      <form method="POST" action="/search" class="d-flex">
-        <input name="search" id="search" type="text" placeholder="Arama" class="form-control me-2">
-        <button type="submit" class="btn btn-primary">Arama</button>
+      <form class="d-flex">
+        <input class="form-control me-2" type="text" placeholder="Arama">
+        <button class="btn btn-primary" type="button">Arama</button>
       </form>
     </div>
   </div>
 </nav>
 </header>
-<main>
-    {% block body %}
-    {% endblock %}
-</main>
-<footer>
-</footer>
+    <button type="button" class="btn">Basic</button>
 </body>
 </html>
