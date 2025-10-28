@@ -1,7 +1,31 @@
 {% extends 'base.html' %}
 {% block body %}
 <div class="container">
-    <h1>{{ username }}</h1>
+    <h1>{{ user.username }}</h1>
+     <div class="dropdown; text-end">
+  <button type="button" class="btn btn-outline-dark dropdown-toggle" data-bs-toggle="dropdown">
+    Ayarlar
+  </button>
+    <ul class="dropdown-menu">
+    <li><h5 class="dropdown-header">İsim değiştirme</h5></li>
+    <form method="POST">
+        <li><input type="text" id="new_username" name="new_username" class="dropdown-item; form-control"></li>
+        <li><button type="submit" class="dropdown-item; btn btn-outline-dark">İsim Değiştir</button></li>
+    </form>
+    <form method="POST">
+      <li><h5 class="dropdown-header">Şifre değiştirme</h5></li>
+      <li><h5 class="dropdown-header">Şifre</h5></li>
+      <li><input type="text" id="password" name="password" class="dropdown-item; form-control" ></input></li>
+      <li><h5 class="dropdown-header">Yeni Şifre</h5></li>
+      <li><input type="text" id="new_password" name="new_password" class="dropdown-item; form-control" ></input></li>
+      <li><button type="submit" class="dropdown-item; btn btn-outline-dark">Şifre Değiştir</button></li>
+    </form>
+    <li><h5 class="dropdown-header">kullanıcı silme</h5></li>
+    <form method="POST">
+    <li><button type="submit" name="delete_user" class="dropdown-item; btn btn-outline-dark">Sil</button></li>
+    </form>
+    </ul>
+</div>
     {% include 'post_list.html' %}
 </div>
 {% endblock %}

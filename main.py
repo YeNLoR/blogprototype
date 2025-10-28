@@ -17,32 +17,32 @@ login_manager = flask_login.LoginManager()
 login_manager.init_app(app)
 
 class Users(db.Model, flask_login.UserMixin):
+    id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(32), unique=True)
-    username = db.Column(db.String(16), nullable=False, primary_key=True)
+    username = db.Column(db.String(16), nullable=False)
     password = db.Column(db.String(16), nullable=False)
-    salt = db.Column(db.String(16), nullable=False)
     register_date = db.Column(db.DateTime, nullable=False)
     posts = db.relationship('Posts', backref='author', lazy='dynamic')
     comments = db.relationship('Comments', backref='author', lazy='dynamic')
 
     def get_id(self):
-        return str(self.username)
+        return str(self.id)
 
 class Posts(db.Model):
-    id = db.Column(db.String(64), primary_key=True)
+    id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(64), nullable=False)
     content = db.Column(db.Text, nullable=False)
     #tags = db.Column(db.String(64), nullable=False)
     date_posted = db.Column(db.DateTime, nullable=False)
     comments = db.relationship('Comments', backref='post', lazy='dynamic')
-    author_username = db.Column(db.String(16), db.ForeignKey('users.username'), nullable=False)
+    author_id = db.Column(db.String(16), db.ForeignKey('users.id'), nullable=False)
 
 class Comments(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     content = db.Column(db.Text, nullable=False)
     date_posted = db.Column(db.DateTime, nullable=False)
 
-    author_username = db.Column(db.String(16), db.ForeignKey('users.username'), nullable=False)
+    author_id = db.Column(db.String(16), db.ForeignKey('users.id'), nullable=False)
     post_id = db.Column(db.Integer, db.ForeignKey('posts.id'), nullable=False)
 
 @login_manager.user_loader
@@ -90,8 +90,9 @@ def register():
             u.username = username
             u.email = email
             u.password = password
-            u.salt = 1
             u.register_date = datetime.datetime.now()
+            for key, value in u.__dict__.items():
+                print(key, value, type(value))
             db.session.add(u)
             db.session.commit()
     return flask.render_template('register.html',
@@ -102,37 +103,55 @@ admins = ["YeNLoR", "Mrwn", "asd"]
 @app.route('/profile', methods=['GET', 'POST'])
 @flask_login.login_required
 def profile():
+    if "new_username" in request.form:
+        new_username = request.form['new_username']
+        user = db.session.query(Users).filter_by(id=flask_login.current_user.id).first()
+        user.username = new_username
+        db.session.add(user)
+        db.session.commit()
+
+    if "new_password" in request.form:
+        new_password = request.form['new_password']
+        password = request.form['password']
+        user = db.session.query(Users).filter_by(id=flask_login.current_user.id).first()
+        if user.password == password and 16 >= len(new_password) >= 1:
+            user.password = new_password
+            db.session.add(user)
+            db.session.commit()
+
     if "delete_user" in request.form:
         username = request.form['delete_user']
         if flask_login.current_user.username == username:
-            for post in Posts.query.filter_by(author_username=username).all():
+            for post in Posts.query.filter_by(author_id=username).all():
                 db.session.delete(post)
             db.session.delete(Users.query.filter_by(username=username).first())
             flask_login.logout_user()
             db.session.commit()
 
             return flask.redirect(flask.url_for('index'))
+
     if "delete" in request.form:
         post_id = request.form['delete']
-        if flask_login.current_user.username == db.session.query(Posts).filter_by(id=post_id).first().author_username:
+        if flask_login.current_user.username == db.session.query(Posts).filter_by(id=post_id).first().author_id:
             db.session.delete(Posts.query.get(request.form["delete"]))
             db.session.commit()
     return flask.render_template('profile.html',
                                  TITLE="Profil",
-                                 username=flask_login.current_user.username,
-                                 posts=Posts.query.filter_by(author_username=flask_login.current_user.username).order_by(Posts.date_posted.desc()).all(),
+                                 user=flask_login.current_user,
+                                 posts=Posts.query.filter_by(author_id=flask_login.current_user.id).order_by(Posts.date_posted.desc()).all(),
                                  admin=True
     )
 
 @app.route('/profile/<id>', methods=['GET','POST'])
 def show_profile(id):
     admin = False
+    user = db.session.query(Users).filter_by(id=id).first()
     if flask_login.current_user.username in admins:
         admin = True
     if "delete_user" in request.form:
         username = request.form['delete_user']
         if admin:
-            for post in Posts.query.filter_by(author_username=username).all():
+            for post in Posts.query.filter_by(author_id=username).all():
                 db.session.delete(post)
             db.session.delete(Users.query.filter_by(username=username).first())
             flask_login.logout_user()
@@ -146,10 +165,9 @@ def show_profile(id):
             return flask.redirect(request.referrer)
     return flask.render_template('profile.html',
                                 TITLE="Profil",
-                                username=id,
-                                posts=Posts.query.filter_by(author_username=id).all(),
-                                admin=admin
-                                 )
+                                user=user,
+                                posts=Posts.query.filter_by(author_id=id).all(),
+                                admin=admin)
 
 @app.route('/post', methods=['GET','POST'])
 @flask_login.login_required
@@ -161,17 +179,15 @@ def post():
         if len(content) > 0 and len(title) > 0:
             post = Posts()
             post.title = title
-            post.id = title.strip()
             post.content = content
             post.date_posted = datetime.datetime.now()
-            post.author_username = flask_login.current_user.username
+            post.author_id = flask_login.current_user.id
             db.session.add(post)
             db.session.commit()
             return flask.redirect(flask.url_for('index'))
 
     return flask.render_template('post.html',
-                                 TITLE = 'Post Oluştur',
-                                 user=flask_login.current_user.username)
+                                 TITLE = 'Post Oluştur')
 
 @app.route('/post/<id>', methods=['GET','POST'])
 def show_post(id):
