@@ -97,7 +97,7 @@ def register():
     return flask.render_template('register.html',
                                  TITLE='Kayıt ol')
 
-admins = ["YeNLoR", "Mrwn"]
+admins = ["YeNLoR", "Mrwn", "asd"]
 
 @app.route('/profile', methods=['GET', 'POST'])
 @flask_login.login_required
@@ -111,7 +111,6 @@ def profile():
             flask_login.logout_user()
             db.session.commit()
 
-
             return flask.redirect(flask.url_for('index'))
     if "delete" in request.form:
         post_id = request.form['delete']
@@ -121,7 +120,7 @@ def profile():
     return flask.render_template('profile.html',
                                  TITLE="Profil",
                                  username=flask_login.current_user.username,
-                                 posts=Posts.query.filter_by(author_username=flask_login.current_user.username).all(),
+                                 posts=Posts.query.filter_by(author_username=flask_login.current_user.username).order_by(Posts.date_posted.desc()).all(),
                                  admin=True
     )
 
@@ -144,6 +143,7 @@ def show_profile(id):
         if admin:
             db.session.delete(Posts.query.get(post_id))
             db.session.commit()
+            return flask.redirect(request.referrer)
     return flask.render_template('profile.html',
                                 TITLE="Profil",
                                 username=id,

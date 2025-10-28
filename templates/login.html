@@ -1,12 +1,13 @@
 {% extends 'base.html' %}
 {% block body %}
-<form method="POST" action="/login">
-    <label for="username">Kullanıcı adı:</label><br>
-    <input type="text" id="username" name="username" class="form-control"><br>
-
-    <label for="password">Şifre:</label><br>
-    <input type="text" id="password" name="password" class="form-control"><br>
-    <button id="submit" class="btn btn-outline-dark">Giriş yap</button><br>
-</form>
+<div class="container">
+    <form method="POST" action="/login">
+        <label for="username">Kullanıcı adı:</label><br>
+        <input type="text" id="username" name="username" class="form-control"><br>
+        <label for="password">Şifre:</label><br>
+        <input type="text" id="password" name="password" class="form-control"><br>
+        <button id="submit" class="btn btn-outline-dark">Giriş yap</button><br>
+    </form>
+</div>
 {% endblock %}
 

@@ -1,10 +1,36 @@
 <div class="list-group">
-
 {% for post in posts %}
-    <a href="/post/{{ post.id }}" class="list-group-item list-group-item-action py-3">
-        <div class="d-flex gap-3 w-100 ">
-            {{ post.title }}
+    <div class="list-group-item">
+        <div class="row">
+            <div class="col">
+            <a href="/post/{{ post.id }}">{{ post.title }}</a><br>
+            </div>
+            <div class="col text-end">
+                <div>
+                    <small>By: </small><a href="/profile/{{ post.author_username }}">{{ post.author_username }}</a>
+                </div>
+
+            </div>
         </div>
-    </a> <br>
+        <div class="row">
+            <div class="col">
+            <!{{post.content[0:20]}}!>
+            </div>
+            <div class="col text-end">
+                <div class="dropdown">
+                <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown">
+                </button>
+                <ul class="dropdown-menu">
+                <li>
+                    <form method="POST" action="/profile/{{ post.id }}">
+                        <button type="submit" name="delete" value="{{ post.id }}" class="dropdown-item">Sil</button>
+                    </form>
+                </li>
+                <li><a class="dropdown-item" href="#">Düzenle</a></li>
+                </ul>
+                </div>
+            </div>
+        </div>
+    </div>
 {% endfor %}
 </div>

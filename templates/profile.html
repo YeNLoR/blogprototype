@@ -1,5 +1,7 @@
 {% extends 'base.html' %}
 {% block body %}
-<h1>{{ username }}</h1>
-{% include 'post_list.html' %}
+<div class="container">
+    <h1>{{ username }}</h1>
+    {% include 'post_list.html' %}
+</div>
 {% endblock %}
