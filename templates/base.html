@@ -8,43 +8,7 @@
 </head>
 <body>
 <header>
-<nav class="navbar navbar-expand-sm navbar-dark bg-dark">
-  <div class="container-fluid">
-    <a class="navbar-brand" href="javascript:void(0)">Logo</a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mynavbar">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="mynavbar">
-      <ul class="navbar-nav me-auto">
-        <li class="nav-item">
-          <a class="nav-link" href="/">Anasayfa</a>
-        </li>
-        {% if not logged_in %}
-        <li class="nav-item">
-          <a class="nav-link" href="/login">Giriş Yap</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="/register">Kayıt Ol</a>
-        </li>
-        {% else %}
-        <li class="nav-item">
-          <a class="nav-link" href="/post">Blog oluştur</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="/profile">Profil</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="/logout">Çıkış</a>
-        </li>
-        {% endif %}
-      </ul>
-      <form method="POST" action="/search" class="d-flex">
-        <input name="search" id="search" type="text" placeholder="Arama" class="form-control me-2">
-        <button type="submit" class="btn btn-primary">Arama</button>
-      </form>
-    </div>
-  </div>
-</nav>
+    {% include "header.html" %}
 </header>
 <main>
     {% block body %}

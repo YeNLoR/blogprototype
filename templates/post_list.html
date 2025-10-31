@@ -7,7 +7,7 @@
             </div>
             <div class="col text-end">
                 <div>
-                    <small>By: </small><a href="/profile/{{ post.id }}">{{ post.author.username }}</a>
+                    <small>By: </small><a href="/post/{{ post.id }}">{{ post.author.username }}</a>
                 </div>
 
             </div>
@@ -22,8 +22,8 @@
                 </button>
                 <ul class="dropdown-menu">
                 <li>
-                    <form method="POST" action="/profile/{{ post.id }}">
-                        <button type="submit" name="delete" value="{{ post.id }}" class="dropdown-item">Sil</button>
+                    <form method="POST" action="/delete_post/">
+                        <button type="submit" name="delete_post" value="{{ post.id }}" class="dropdown-item">Sil</button>
                     </form>
                 </li>
                 <li><a class="dropdown-item" href="#">Düzenle</a></li>
