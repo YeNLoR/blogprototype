@@ -20,15 +20,11 @@ login_manager.init_app(app)
 
 class Users(db.Model, flask_login.UserMixin):
     id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(32), unique=True)
     username = db.Column(db.String(16), nullable=False)
     password = db.Column(db.String, nullable=False)
     register_date = db.Column(db.DateTime, nullable=False)
     posts = db.relationship('Posts', backref='author', lazy='dynamic')
     comments = db.relationship('Comments', backref='author', lazy='dynamic')
-
-    def get_id(self):
-        return str(self.id)
 
 class Posts(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -49,14 +45,14 @@ class Comments(db.Model):
 
 @login_manager.user_loader
 def load_user(user_id):
-    return Users.query.get(str(user_id))
+    return db.session.query(Users).filter_by(id=user_id).first()
 
 @app.context_processor
 def inject_user_status():
     return dict(logged_in=flask_login.current_user.is_authenticated)
 @app.route('/')
 def index():
-    latest_posts = Posts.query.order_by(Posts.date_posted.desc()).limit(24)
+    latest_posts = db.session.query(Posts).order_by(Posts.date_posted.desc()).limit(24)
     return flask.render_template('index.html',
                                  TITLE = "Benim Ultra Mega Güzel Blog Prototipim",
                                  posts=latest_posts)
@@ -66,8 +62,7 @@ def login():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
-
-        user = Users.query.filter_by(username=username).first()
+        user = db.session.query(Users).filter_by(username=username).first()
         if user and check_password_hash(user.password, password):
             flask_login.login_user(user, remember=True)
             return flask.redirect(flask.url_for('profile'))
@@ -84,17 +79,13 @@ def logout():
 def register():
     if request.method == 'POST':
         username = request.form['username']
-        email = request.form['email']
         password = request.form['password']
         password2 = request.form['password2']
-        if len(username) > 1 and len(email) > 1 and len(password) > 1 and password == password2:
+        if len(username) > 1 and len(password) > 1 and password == password2:
             u = Users()
             u.username = username
-            u.email = email
             u.password = generate_password_hash(password)
             u.register_date = datetime.datetime.now()
-            for key, value in u.__dict__.items():
-                print(key, value, type(value))
             db.session.add(u)
             db.session.commit()
     return flask.render_template('register.html',
@@ -128,13 +119,14 @@ def profile():
                                  admin=True
     )
 
-@app.route('/profile/<id>', methods=['GET','POST'])
-def show_profile(id):
-    user = db.session.query(Users).filter_by(id=id).first()
+@app.route('/profile/<profile_id>', methods=['GET','POST'])
+def show_profile(profile_id):
+    user = db.session.query(Users).filter_by(id=profile_id).first()
+    posts_from_user = db.session.query(Posts).filter_by(author_id=user.id).all()
     return flask.render_template('profile.html',
                                 TITLE="Profil",
                                 user=user,
-                                posts=Posts.query.filter_by(author_id=id).all())
+                                posts=posts_from_user)
 
 @app.route('/post', methods=['GET','POST'])
 @flask_login.login_required
@@ -144,53 +136,56 @@ def post():
         content = request.form['content']
         content = markdown.markdown(content)
         if len(content) > 0 and len(title) > 0:
-            post = Posts()
-            post.title = title
-            post.content = content
-            post.date_posted = datetime.datetime.now()
-            post.author_id = flask_login.current_user.id
-            db.session.add(post)
+            new_post = Posts()
+            new_post.title = title
+            new_post.content = content
+            new_post.date_posted = datetime.datetime.now()
+            new_post.author_id = flask_login.current_user.id
+            db.session.add(new_post)
             db.session.commit()
             return flask.redirect(flask.url_for('index'))
 
     return flask.render_template('post.html',
                                  TITLE = 'Post Oluştur')
 
-@app.route('/post/<id>', methods=['GET','POST'])
-def show_post(id):
-    post = Posts.query.get(id)
-    if post is None:
+@app.route('/post/<post_id>', methods=['GET','POST'])
+def show_post(post_id):
+    check_post = db.session.query(Posts).filter_by(id=post_id).first()
+    if check_post is None:
         flask.abort(404)
     else:
         return flask.render_template('show_post.html',
-                                     post=post)
+                                     post=check_post)
 @app.route('/search', methods=['GET', 'POST'])
 def search():
     if request.method == 'POST':
-        search = request.form['search']
-        link = "/search/" + search
-        print(link)
+        search_string = request.form['search']
+        link = "/search/" + search_string
         return flask.redirect(link)
+    return None
+
 
 @app.route("/search/<search>")
-def search_title(search):
-    posts = Posts.query.filter(Posts.title.contains(search)).all()
+def search_title(search_post):
+    posts = db.session.query(Posts).filter(Posts.title.contains(search_post)).all()
     return flask.render_template('index.html',
                                  posts=posts)
+
 @app.route("/delete_post/", methods=['POST'])
 @flask_login.login_required
 def delete_post():
-    post = {}
+    post_to_delete = {}
     moderator = False
     if request.form["delete_post"]:
         post_id = int(request.form["delete_post"])
-        post = Posts.query.filter_by(id=post_id).first()
+        post_to_delete = db.session.query(Posts).filter_by(id=post_id).first()
     if flask_login.current_user.id in moderators:
         moderator = True
-    if moderator or post.author_id == flask_login.current_user.id:
-        db.session.delete(post)
+    if moderator or post_to_delete.author_id == flask_login.current_user.id:
+        db.session.delete(post_to_delete)
         db.session.commit()
         return flask.redirect(request.referrer)
+    return f"Diğer kullanıcıların paylaşımlarını silme yetkin yok. <a href='{request.referrer}'>Geri git</a>"
 
 @app.route("/delete_user/", methods=['POST'])
 @flask_login.login_required
@@ -199,14 +194,14 @@ def delete_user():
     moderator = False
     if request.form["delete_user"]:
         user_id = int(request.form["delete_user"])
-        user = Users.query.filter_by(id=user_id).first()
-    print(user)
+        user = db.session.query(Users).filter_by(id=user_id).first()
     if flask_login.current_user.id in moderators:
         moderator = True
     if moderator or flask_login.current_user.id == user.id:
         db.session.delete(user)
         db.session.commit()
         return flask.redirect(request.referrer)
+    return f"Diğer kullanıcıların hesaplarını silme yetkin yok. <a href='{request.referrer}'>Geri git</a>"
 
 if __name__ == '__main__':
     with app.app_context():
