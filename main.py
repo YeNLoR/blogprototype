@@ -1,11 +1,10 @@
-import markdown
+import datetime
 import flask
+from flask import request
 import flask_sqlalchemy
 import flask_login
-import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask import request
-
+from utils import check_password, process_content
 
 app = flask.Flask(__name__)
 
@@ -66,6 +65,8 @@ def login():
         if user and check_password_hash(user.password, password):
             flask_login.login_user(user, remember=True)
             return flask.redirect(flask.url_for('profile'))
+        else:
+            return f"Yanlış kullanıcı adı yada şifre. <a href='{request.referrer}'>Geri git</a>"
 
     return flask.render_template('login.html',
                                  TITLE='Giriş yap')
@@ -81,13 +82,16 @@ def register():
         username = request.form['username']
         password = request.form['password']
         password2 = request.form['password2']
-        if len(username) > 1 and len(password) > 1 and password == password2:
+        if len(username) > 0 and check_password(password) and password == password2:
             u = Users()
             u.username = username
             u.password = generate_password_hash(password)
             u.register_date = datetime.datetime.now()
             db.session.add(u)
             db.session.commit()
+            return flask.redirect(flask.url_for('login'))
+        else:
+            return f"Şifre en az 8 en fazla 16 karakter içermelidir ve A-Z, a-z, 0-9, _, - harici karakterler kullanılmamalıdır. <a href='{request.referrer}'>Geri git</a>"
     return flask.render_template('register.html',
                                  TITLE='Kayıt ol')
 
@@ -107,10 +111,12 @@ def profile():
         new_password = request.form['new_password']
         password = request.form['password']
         user = db.session.query(Users).filter_by(id=flask_login.current_user.id).first()
-        if check_password_hash(user.password, password) and 16 >= len(new_password) >= 1:
+        if check_password_hash(user.password, password) and check_password(new_password):
             user.password = generate_password_hash(new_password)
             db.session.add(user)
             db.session.commit()
+        else:
+            return f"Şifre en az 8 en fazla 16 karakter içermelidir ve A-Z, a-z, 0-9, _, - harici karakterler kullanılmamalıdır  <a href='{request.referrer}'>Geri git</a>"
 
     return flask.render_template('profile.html',
                                  TITLE="Profil",
@@ -134,11 +140,11 @@ def post():
     if request.method == 'POST' and "submit" in request.form:
         title = request.form['title']
         content = request.form['content']
-        content = markdown.markdown(content)
-        if len(content) > 0 and len(title) > 0:
+        final_content = process_content(content)
+        if len(final_content) > 0 and len(title) > 0:
             new_post = Posts()
             new_post.title = title
-            new_post.content = content
+            new_post.content = final_content
             new_post.date_posted = datetime.datetime.now()
             new_post.author_id = flask_login.current_user.id
             db.session.add(new_post)
@@ -162,10 +168,10 @@ def search():
         search_string = request.form['search']
         link = "/search/" + search_string
         return flask.redirect(link)
-    return None
+    return f"Hata <a href='{flask.url_for('index')}'>Ana sayfaya dön.</a>"
 
 
-@app.route("/search/<search>")
+@app.route("/search/<search_post>")
 def search_title(search_post):
     posts = db.session.query(Posts).filter(Posts.title.contains(search_post)).all()
     return flask.render_template('index.html',
