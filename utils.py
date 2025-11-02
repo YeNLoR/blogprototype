@@ -9,6 +9,13 @@ def check_password(password):
         return False
     return True
 
+def get_tag_list(tags_string):
+    tags_list = []
+    tags_string = tags_string.lower().replace(' ', '')
+    for tag in tags_string.split(','):
+        tags_list.append(tag)
+    return tags_list
+
 def process_content(content):
     html_content = markdown.markdown(content)
     allowed_tags = [

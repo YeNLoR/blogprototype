@@ -4,7 +4,7 @@ from flask import request
 import flask_sqlalchemy
 import flask_login
 from werkzeug.security import generate_password_hash, check_password_hash
-from utils import check_password, process_content
+from utils import check_password, process_content, get_tag_list
 
 app = flask.Flask(__name__)
 
@@ -27,14 +27,22 @@ class Users(db.Model, flask_login.UserMixin):
     posts = db.relationship('Posts', backref='author', lazy='dynamic')
     comments = db.relationship('Comments', backref='author', lazy='dynamic')
 
+post_tag_relation = db.Table('post_tag_relation',
+                             db.Column('post_id', db.Integer, db.ForeignKey('posts.id')),
+                             db.Column('tag_id', db.Integer, db.ForeignKey('tags.id')))
+
+class Tags(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(48))
+
 class Posts(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(64), nullable=False)
     content = db.Column(db.Text, nullable=False)
-    #tags = db.Column(db.String(64), nullable=False)
     date_posted = db.Column(db.DateTime, nullable=False)
     comments = db.relationship('Comments', backref='post', lazy='dynamic')
     author_id = db.Column(db.String(16), db.ForeignKey('users.id'), nullable=False)
+    tags = db.relationship('Tags', secondary=post_tag_relation, backref=db.backref('posts'))
 
 class Comments(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -140,6 +148,7 @@ def post():
     if request.method == 'POST' and "submit" in request.form:
         title = request.form['title']
         content = request.form['content']
+        tags = get_tag_list(request.form['tags'])
         final_content = process_content(content)
         if len(final_content) > 0 and len(title) > 0:
             new_post = Posts()
@@ -147,6 +156,9 @@ def post():
             new_post.content = final_content
             new_post.date_posted = datetime.datetime.now()
             new_post.author_id = flask_login.current_user.id
+            for tag in tags:
+                db.session.add(Tags(name=str(tag)))
+                new_post.tags.append(db.session.query(Tags).filter_by(name=str(tag)).first())
             db.session.add(new_post)
             db.session.commit()
             return flask.redirect(flask.url_for('index'))
