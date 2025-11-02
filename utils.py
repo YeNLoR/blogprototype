@@ -13,7 +13,7 @@ def process_content(content):
     html_content = markdown.markdown(content)
     allowed_tags = [
         'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6' 'ul', 'ol', 'li', 'pre',
-        'code', 'blockquote', 'a', 'strong', 'em', 'img', 'br',
+        'code', 'blockquote', 'a', 'strong', 'u', 's', 'del', 'em', 'img', 'br',
     ]
     allowed_attrs = {
         'a': ['href', 'title'],

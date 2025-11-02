@@ -1,0 +1,27 @@
+<div class="list-group">
+    {% for comment in comments %}
+    <div class="list-group-item">
+        <div class="row">
+            <div>
+                <small>Kullanıcı: </small><a href="/profile/{{ comment.author.id }}">{{ comment.author.username }}</a><br>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+            {{ comment.content }}
+            </div>
+            <div class="col">
+                <div class="dropup  ; text-end">
+                    <button type="button" class="btn btn-outline-dark dropdown-toggle" data-bs-toggle="dropdown">Ayarlar</button>
+                    <ul class="dropdown-menu">
+                    <form method="POST" action="/delete_comment">
+                    <li><button type="submit" name="delete_comment" value="{{ comment.id }}" class="dropdown-item; btn btn-outline-dark">Sil</button></li>
+                    </form>
+                    <li><button type="submit" class="dropdown-item; btn btn-outline-dark">Düzenle</button></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>

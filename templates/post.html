@@ -2,13 +2,20 @@
 {% block body %}
 <div class="row justify-content-center  ">
     <div class="col-sm-10 col-md-8 col-lg-6">
-        <form method="POST" action="/post">
-            <div >
-            <label for="title" class="form-label">Başlık</label><br>
-            <input type="text" id="title" name="title" placeholder="{{ title }}" class="form-control"><br>
-            <label for="content" class="form-label">İçerik</label><br>
-            <textarea id="content" name="content" placeholder="{{ content }}" class="form-control"></textarea><br>
-            <button type="submit" id="submit" name="submit" class="btn btn-outline-dark">Paylaş</button>
+        <form id="post_form" method="POST" action="/post">
+            <div>
+                <label for="title" class="form-label">Başlık</label><br>
+                <input type="text" id="title" name="title" placeholder="{{ title }}" class="form-control"><br>
+                <label for="content" class="form-label">İçerik</label><br>
+                <textarea id="content" name="content" style="display:none;"></textarea>
+                <link href="https://cdn.jsdelivr.net/npm/quill@2/dist/quill.snow.css" rel="stylesheet">
+                <link href="/static/quill.css" rel="stylesheet">
+                <div id="editor">
+                    <p></p>
+                </div>
+                <button type="submit" id="submit" name="submit" class="btn btn-outline-dark">Paylaş</button>
+                <script src="https://cdn.jsdelivr.net/npm/quill@2/dist/quill.js"></script>
+                <script src="/static/quill.js"></script>
             </div>
         </form>
     </div>

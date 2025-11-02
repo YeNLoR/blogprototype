@@ -4,4 +4,15 @@
     <h1 style="text-align: center">{{ post.title }}</h1>
     {{ post.content | safe }}
 </div>
+<hr>
+<div class="container">
+    {% include 'comment_list.html' %}
+</div>
+<div class="container">
+    <form method="POST">
+        <label for="comment"></label>
+        <textarea id="comment" name="comment" class="form-control"></textarea><br>
+        <button id="submit" class="btn btn-outline-dark" >Yorum yap</button>
+    </form>
+</div><br>
 {% endblock %}

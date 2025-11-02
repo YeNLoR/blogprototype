@@ -17,6 +17,8 @@ db = flask_sqlalchemy.SQLAlchemy(app)
 login_manager = flask_login.LoginManager()
 login_manager.init_app(app)
 
+moderators = [1, 2]
+
 class Users(db.Model, flask_login.UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(16), nullable=False)
@@ -95,8 +97,6 @@ def register():
     return flask.render_template('register.html',
                                  TITLE='Kayıt ol')
 
-moderators = [1, 2]
-
 @app.route('/profile', methods=['GET', 'POST'])
 @flask_login.login_required
 def profile():
@@ -159,9 +159,21 @@ def show_post(post_id):
     check_post = db.session.query(Posts).filter_by(id=post_id).first()
     if check_post is None:
         flask.abort(404)
+    if request.method == 'POST':
+        comment = request.form['comment']
+        author_id = flask_login.current_user.id
+        new_comment = Comments()
+        new_comment.author_id = author_id
+        new_comment.post_id = post_id
+        new_comment.content = comment
+        new_comment.date_posted = datetime.datetime.now()
+        db.session.add(new_comment)
+        db.session.commit()
+        return flask.redirect(request.referrer)
     else:
         return flask.render_template('show_post.html',
-                                     post=check_post)
+                                     post=check_post,
+                                     comments=check_post.comments)
 @app.route('/search', methods=['GET', 'POST'])
 def search():
     if request.method == 'POST':
@@ -177,7 +189,7 @@ def search_title(search_post):
     return flask.render_template('index.html',
                                  posts=posts)
 
-@app.route("/delete_post/", methods=['POST'])
+@app.route("/delete_post", methods=['POST'])
 @flask_login.login_required
 def delete_post():
     post_to_delete = {}
@@ -193,7 +205,7 @@ def delete_post():
         return flask.redirect(request.referrer)
     return f"Diğer kullanıcıların paylaşımlarını silme yetkin yok. <a href='{request.referrer}'>Geri git</a>"
 
-@app.route("/delete_user/", methods=['POST'])
+@app.route("/delete_user", methods=['POST'])
 @flask_login.login_required
 def delete_user():
     user = {}
@@ -208,6 +220,25 @@ def delete_user():
         db.session.commit()
         return flask.redirect(request.referrer)
     return f"Diğer kullanıcıların hesaplarını silme yetkin yok. <a href='{request.referrer}'>Geri git</a>"
+
+@app.route("/delete_comment", methods=['POST'])
+@flask_login.login_required
+def delete_comment():
+    comment_to_delete = {}
+    moderator = False
+    print(request.form)
+    if request.form["delete_comment"]:
+        comment_id = int(request.form["delete_comment"])
+        comment_to_delete = db.session.query(Comments).filter_by(id=comment_id).first()
+        print(comment_to_delete)
+    if flask_login.current_user.id in moderators:
+        moderator = True
+    if moderator or comment_to_delete.author_id == flask_login.current_user.id:
+        db.session.delete(comment_to_delete)
+        db.session.commit()
+        return flask.redirect(request.referrer)
+    return f"Diğer kullanıcıların yorumlarını silme yetkin yok. <a href='{request.referrer}'>Geri git</a>"
+
 
 if __name__ == '__main__':
     with app.app_context():
