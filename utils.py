@@ -2,6 +2,22 @@ import re
 import markdown
 import bleach
 
+def search_parser(search_string):
+    search_dict = {}
+    if not search_string:
+        return search_dict
+    for item in search_string.split(','):
+        item = item.strip()
+        if not item:
+            continue
+    parts = item.split(':',1)
+    if len(parts) == 2:
+        key = parts[0].strip()
+        value = parts[1].strip()
+        if key.lower() in['user', 'post', 'tags']:
+            search_dict[key.lower()] = value
+    return search_dict
+
 def check_password(password):
     if not len(password) >= 8 and len(password) <= 16:
         return False
@@ -10,10 +26,13 @@ def check_password(password):
     return True
 
 def get_tag_list(tags_string):
-    tags_list = []
-    tags_string = tags_string.lower().replace(' ', '')
-    for tag in tags_string.split(','):
-        tags_list.append(tag)
+    if not tags_string:
+        return []
+    tags_list = {
+        tag.strip().lower()
+        for tag in tags_string.split(',')
+        if tag.strip()
+    }
     return tags_list
 
 def process_content(content):

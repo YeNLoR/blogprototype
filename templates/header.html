@@ -1,4 +1,4 @@
-<nav class="navbar navbar-expand-sm navbar-dark bg-dark">
+<nav class="navbar navbar-expand-sm navbar-dark bg-dark" xmlns="http://www.w3.org/1999/html">
   <div class="container-fluid">
     <a class="navbar-brand" href="javascript:void(0)">Blog</a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mynavbar">
@@ -29,7 +29,7 @@
         {% endif %}
       </ul>
       <form method="POST" action="/search" class="d-flex">
-        <input name="search" id="search" type="text" placeholder="Arama" class="form-control me-2">
+        <input name="search" id="search" type="text" placeholder="Arama" class="form-control me-2" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Örnek: user:kullanıcıadı,post:başlık,tags:etiket">
         <button type="submit" class="btn btn-primary">Arama</button>
       </form>
     </div>

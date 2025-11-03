@@ -12,12 +12,12 @@
             </div>
             <div class="col">
                 <div class="dropup  ; text-end">
-                    <button type="button" class="btn btn-outline-dark dropdown-toggle" data-bs-toggle="dropdown">Ayarlar</button>
+                    <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown"></button>
                     <ul class="dropdown-menu">
                     <form method="POST" action="/delete_comment">
-                    <li><button type="submit" name="delete_comment" value="{{ comment.id }}" class="dropdown-item; btn btn-outline-dark">Sil</button></li>
+                    <li><button type="submit" name="delete_comment" value="{{ comment.id }}" class="dropdown-item">Sil</button></li>
                     </form>
-                    <li><button type="submit" class="dropdown-item; btn btn-outline-dark">Düzenle</button></li>
+                    <li><button type="submit" class="dropdown-item">Düzenle</button></li>
                     </ul>
                 </div>
             </div>

@@ -4,7 +4,7 @@ from flask import request
 import flask_sqlalchemy
 import flask_login
 from werkzeug.security import generate_password_hash, check_password_hash
-from utils import check_password, process_content, get_tag_list
+from utils import check_password, process_content, get_tag_list, search_parser
 
 app = flask.Flask(__name__)
 
@@ -17,7 +17,7 @@ db = flask_sqlalchemy.SQLAlchemy(app)
 login_manager = flask_login.LoginManager()
 login_manager.init_app(app)
 
-moderators = [1, 2]
+moderators = [1]
 
 class Users(db.Model, flask_login.UserMixin):
     id = db.Column(db.Integer, primary_key=True)
@@ -157,7 +157,8 @@ def post():
             new_post.date_posted = datetime.datetime.now()
             new_post.author_id = flask_login.current_user.id
             for tag in tags:
-                db.session.add(Tags(name=str(tag)))
+                if not db.session.query(Tags).filter_by(name=tag).all():
+                    db.session.add(Tags(name=str(tag)))
                 new_post.tags.append(db.session.query(Tags).filter_by(name=str(tag)).first())
             db.session.add(new_post)
             db.session.commit()
@@ -189,9 +190,24 @@ def show_post(post_id):
 @app.route('/search', methods=['GET', 'POST'])
 def search():
     if request.method == 'POST':
-        search_string = request.form['search']
-        link = "/search/" + search_string
-        return flask.redirect(link)
+        print(request.form['search'])
+        search_dict = search_parser(request.form['search'])
+        user_string = search_dict.get('user', None)
+        post_string = search_dict.get('post', None)
+        tag_string = search_dict.get('tag', None)
+        posts = db.session.query(Posts)
+        if user_string == None and post_string == None and tag_string == None:
+            print(request.form['search'])
+            posts = posts.filter(Posts.title.contains(request.form['search'])).all()
+        else:
+            if user_string and user_string != '':
+                posts = posts.join(Posts.author).filter(Users.username.contains(user_string)).all()
+            if post_string and post_string != '':
+                posts = posts.filter(Posts.title.contains(post_string))
+            if tag_string and tag_string != '':
+                posts = posts.filter(Posts.tags.any(Tags.name.contains(tag_string)))
+        return  flask.render_template('index.html',
+                                      posts=posts)
     return f"Hata <a href='{flask.url_for('index')}'>Ana sayfaya dön.</a>"
 
 
@@ -246,13 +262,20 @@ def delete_comment():
     if flask_login.current_user.id in moderators:
         moderator = True
     if moderator or comment_to_delete.author_id == flask_login.current_user.id:
+
         db.session.delete(comment_to_delete)
         db.session.commit()
         return flask.redirect(request.referrer)
     return f"Diğer kullanıcıların yorumlarını silme yetkin yok. <a href='{request.referrer}'>Geri git</a>"
 
-
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
+        if not db.session.query(Users).filter(Users.username == 'admin').first():
+            mod = Users()
+            mod.username = "admin"
+            mod.password = generate_password_hash("admin")
+            mod.register_date = datetime.datetime.now()
+            db.session.add(mod)
+            db.session.commit()
     app.run(host="0.0.0.0", debug=True)
