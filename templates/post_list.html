@@ -25,7 +25,9 @@
                         <button type="submit" name="delete_post" value="{{ post.id }}" class="dropdown-item">Sil</button>
                     </form>
                 </li>
-                <li><a class="dropdown-item" href="#">Düzenle</a></li>
+                <li>
+                    <a href="/edit/{{ post.id }}" class="dropdown-item">Düzenle</a>
+                </li>
                 </ul>
                 </div>
             </div>

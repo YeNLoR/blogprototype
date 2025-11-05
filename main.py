@@ -187,6 +187,39 @@ def show_post(post_id):
         return flask.render_template('show_post.html',
                                      post=check_post,
                                      comments=check_post.comments)
+
+@app.route("/edit/<post_id>", methods=['GET','POST'])
+@flask_login.login_required
+def edit_post(post_id):
+    check_post = db.session.query(Posts).filter_by(id=post_id).first()
+    old_tags = {
+        db.session.query(Tags).filter_by(id=tag.id).first().name
+        for tag in check_post.tags
+    }
+    tag_string = ""
+    for tag in old_tags:
+        tag_string += f"{tag},"
+    if request.method == 'POST':
+        title = request.form['title']
+        content = request.form['content']
+        tags = get_tag_list(request.form['tags'])
+        final_content = process_content(content)
+        if len(final_content) > 0 and len(title) > 0:
+            check_post.title = title
+            check_post.content = final_content
+            check_post.tags = []
+            for tag in tags:
+                if not db.session.query(Tags).filter_by(name=tag).all():
+                    db.session.add(Tags(name=str(tag)))
+                check_post.tags.append(db.session.query(Tags).filter_by(name=str(tag)).first())
+
+            db.session.commit()
+    return flask.render_template('edit.html',
+                                 post=check_post,
+                                 tags=tag_string)
+
+
+
 @app.route('/search', methods=['GET', 'POST'])
 def search():
     if request.method == 'POST':
