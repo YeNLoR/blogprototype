@@ -41,7 +41,7 @@ class Posts(db.Model):
     content = db.Column(db.Text, nullable=False)
     date_posted = db.Column(db.DateTime, nullable=False)
     comments = db.relationship('Comments', backref='post', lazy='dynamic')
-    author_id = db.Column(db.String(16), db.ForeignKey('users.id'), nullable=False)
+    author_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     tags = db.relationship('Tags', secondary=post_tag_relation, backref=db.backref('posts'))
 
 class Comments(db.Model):
@@ -49,7 +49,7 @@ class Comments(db.Model):
     content = db.Column(db.Text, nullable=False)
     date_posted = db.Column(db.DateTime, nullable=False)
 
-    author_id = db.Column(db.String(16), db.ForeignKey('users.id'), nullable=False)
+    author_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     post_id = db.Column(db.Integer, db.ForeignKey('posts.id'), nullable=False)
 
 @login_manager.user_loader
@@ -223,14 +223,12 @@ def edit_post(post_id):
 @app.route('/search', methods=['GET', 'POST'])
 def search():
     if request.method == 'POST':
-        print(request.form['search'])
         search_dict = search_parser(request.form['search'])
         user_string = search_dict.get('user', None)
         post_string = search_dict.get('post', None)
-        tag_string = search_dict.get('tag', None)
+        tag_string = search_dict.get('tags', None)
         posts = db.session.query(Posts)
         if user_string == None and post_string == None and tag_string == None:
-            print(request.form['search'])
             posts = posts.filter(Posts.title.contains(request.form['search'])).all()
         else:
             if user_string and user_string != '':
@@ -243,13 +241,6 @@ def search():
                                       posts=posts)
     return f"Hata <a href='{flask.url_for('index')}'>Ana sayfaya dön.</a>"
 
-
-@app.route("/search/<search_post>")
-def search_title(search_post):
-    posts = db.session.query(Posts).filter(Posts.title.contains(search_post)).all()
-    return flask.render_template('index.html',
-                                 posts=posts)
-
 @app.route("/delete_post", methods=['POST'])
 @flask_login.login_required
 def delete_post():
@@ -261,9 +252,10 @@ def delete_post():
     if flask_login.current_user.id in moderators:
         moderator = True
     if moderator or post_to_delete.author_id == flask_login.current_user.id:
+        post_to_delete.comments.delete(synchronize_session='fetch')
         db.session.delete(post_to_delete)
         db.session.commit()
-        return flask.redirect(request.referrer)
+        return flask.redirect(flask.url_for('index'))
     return f"Diğer kullanıcıların paylaşımlarını silme yetkin yok. <a href='{request.referrer}'>Geri git</a>"
 
 @app.route("/delete_user", methods=['POST'])
@@ -277,6 +269,8 @@ def delete_user():
     if flask_login.current_user.id in moderators:
         moderator = True
     if moderator or flask_login.current_user.id == user.id:
+        user.comments.delete(synchronize_session='fetch')
+        user.posts.delete(synchronize_session='fetch')
         db.session.delete(user)
         db.session.commit()
         return flask.redirect(request.referrer)
@@ -295,7 +289,6 @@ def delete_comment():
     if flask_login.current_user.id in moderators:
         moderator = True
     if moderator or comment_to_delete.author_id == flask_login.current_user.id:
-
         db.session.delete(comment_to_delete)
         db.session.commit()
         return flask.redirect(request.referrer)
