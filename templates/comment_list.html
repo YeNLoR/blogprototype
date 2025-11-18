@@ -11,9 +11,9 @@
                 <pre>{{ comment.content }}</pre>
             </div>
             <div id="edit_{{ comment.id }}" class="edit-comment col" style="display:none;">
-                <form method="POST">
+                <form method="POST" action="/edit_comment">
                     <input name="edited_comment" value="{{ comment.content }}" class="form-control"><br>
-                    <button type="submit" value="{{ comment.id }}" class="btn btn-primary">Düzenle</button>
+                    <button type="submit" name="id" value="{{ comment.id }}" class="btn btn-primary">Düzenle</button>
                 </form>
                 <button type="button" id="cancel" class="edit-comment-cancel btn btn-primary">İptal</button>
             </div>

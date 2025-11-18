@@ -222,15 +222,15 @@ def edit_post(post_id):
 @flask_login.login_required
 def edit_comment():
     if request.method == 'POST':
-        comment = request.form['comment']
-        author_id = flask_login.current_user.id
-        new_comment = Comments()
-        new_comment.author_id = author_id
-        new_comment.content = comment
-        new_comment.date_posted = datetime.datetime.now()
-        db.session.add(new_comment)
-        db.session.commit()
-        return flask.redirect(request.referrer)
+        id = request.form['id']
+        content = request.form['edited_comment']
+        current_user_id = flask_login.current_user.id
+        comment = db.session.query(Comments).filter_by(id=id).first()
+        if comment.author_id == current_user_id:
+            comment.content = content
+            comment.date_posted = datetime.datetime.now()
+            db.session.commit()
+            return flask.redirect(request.referrer)
 
 @app.route('/search', methods=['GET', 'POST'])
 def search():
@@ -306,6 +306,8 @@ def delete_comment():
         db.session.commit()
         return flask.redirect(request.referrer)
     return f"Diğer kullanıcıların yorumlarını silme yetkin yok. <a href='{request.referrer}'>Geri git</a>"
+
+
 
 if __name__ == '__main__':
     with app.app_context():
