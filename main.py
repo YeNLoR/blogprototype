@@ -218,7 +218,19 @@ def edit_post(post_id):
                                  post=check_post,
                                  tags=tag_string)
 
-
+@app.route("/edit_comment" , methods=['GET','POST'])
+@flask_login.login_required
+def edit_comment():
+    if request.method == 'POST':
+        comment = request.form['comment']
+        author_id = flask_login.current_user.id
+        new_comment = Comments()
+        new_comment.author_id = author_id
+        new_comment.content = comment
+        new_comment.date_posted = datetime.datetime.now()
+        db.session.add(new_comment)
+        db.session.commit()
+        return flask.redirect(request.referrer)
 
 @app.route('/search', methods=['GET', 'POST'])
 def search():
@@ -244,6 +256,7 @@ def search():
 @app.route("/delete_post", methods=['POST'])
 @flask_login.login_required
 def delete_post():
+    print(flask_login.current_user.id)
     post_to_delete = {}
     moderator = False
     if request.form["delete_post"]:

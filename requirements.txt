@@ -4,3 +4,4 @@ flask-sqlalchemy
 markdown
 werkzeug
 bleach
+gunicorn

@@ -7,21 +7,29 @@
             </div>
         </div>
         <div class="row">
-            <div class="col">
-            {{ comment.content }}
+            <div id="content_{{ comment.id }}" class="comment-content-display col">
+                <pre>{{ comment.content }}</pre>
+            </div>
+            <div id="edit_{{ comment.id }}" class="edit-comment col" style="display:none;">
+                <form method="POST">
+                    <input name="edited_comment" value="{{ comment.content }}" class="form-control"><br>
+                    <button type="submit" value="{{ comment.id }}" class="btn btn-primary">Düzenle</button>
+                </form>
+                <button type="button" id="cancel" class="edit-comment-cancel btn btn-primary">İptal</button>
             </div>
             <div class="col">
                 <div class="dropup  ; text-end">
                     <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown"></button>
                     <ul class="dropdown-menu">
-                    <form method="POST" action="/delete_comment">
-                    <li><button type="submit" name="delete_comment" value="{{ comment.id }}" class="dropdown-item">Sil</button></li>
-                    </form>
-                    <li><button type="submit" class="dropdown-item">Düzenle</button></li>
+                        <form method="POST" action="/delete_comment">
+                            <li><button type="submit" name="delete_comment" value="{{ comment.id }}" class="dropdown-item">Sil</button></li>
+                        </form>
+                        <li><button type="button" id="edit_comment" class="toggle-edit-button dropdown-item" data-target="#edit_{{ comment.id }}" data-content-target="#content_{{ comment.id }}">Düzenle</button></li>
                     </ul>
                 </div>
             </div>
         </div>
     </div>
     {% endfor %}
+    <script src="/static/comment.js"></script>
 </div>
