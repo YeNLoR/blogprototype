@@ -28,9 +28,9 @@
         </li>
         {% endif %}
       </ul>
-      <form method="POST" action="/search" class="d-flex">
+      <form hx-post="/search" hx-target="#list" class="d-flex">
         <input name="search" id="search" type="text" placeholder="Arama" class="form-control me-2" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Örnek: user:kullanıcıadı,post:başlık,tags:etiket">
-        <button type="submit" class="btn btn-primary">Arama</button>
+        <button type="submit" class="btn btn-primary" >Arama</button>
       </form>
     </div>
   </div>

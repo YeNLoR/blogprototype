@@ -59,12 +59,26 @@ def load_user(user_id):
 @app.context_processor
 def inject_user_status():
     return dict(logged_in=flask_login.current_user.is_authenticated)
+
 @app.route('/')
 def index():
-    latest_posts = db.session.query(Posts).order_by(Posts.date_posted.desc()).limit(24)
+    latest_posts = db.session.query(Posts).order_by(Posts.date_posted.desc()).limit(24).all()
     return flask.render_template('index.html',
                                  TITLE = "Benim Ultra Mega Güzel Blog Prototipim",
+                                 page=2,
                                  posts=latest_posts)
+
+@app.route('/feed')
+def feed():
+    page = int(request.args.get("page"))
+    latest_posts = db.session.query(Posts).order_by(Posts.date_posted.desc()).offset((page-1)*24).limit(24).all()
+    if latest_posts:
+        return flask.render_template('post_list.html',
+                                 TITLE="Benim Ultra Mega Güzel Blog Prototipim",
+                                 page=page+1,
+                                 posts=latest_posts)
+    else:
+        return 'post yok'
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -249,14 +263,13 @@ def search():
                 posts = posts.filter(Posts.title.contains(post_string))
             if tag_string and tag_string != '':
                 posts = posts.filter(Posts.tags.any(Tags.name.contains(tag_string)))
-        return  flask.render_template('index.html',
+        return  flask.render_template('post_list.html',
                                       posts=posts)
     return f"Hata <a href='{flask.url_for('index')}'>Ana sayfaya dön.</a>"
 
 @app.route("/delete_post", methods=['POST'])
 @flask_login.login_required
 def delete_post():
-    print(flask_login.current_user.id)
     post_to_delete = {}
     moderator = False
     if request.form["delete_post"]:

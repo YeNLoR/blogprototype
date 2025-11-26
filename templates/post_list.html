@@ -1,4 +1,4 @@
-<div class="list-group">
+<div id="list" class="list-group">
 {% for post in posts %}
     <div class="list-group-item">
         <div class="row">
@@ -35,3 +35,4 @@
     </div>
 {% endfor %}
 </div>
+<form hx-get="/feed" hx-trigger="intersect once" hx-swap="afterend" hx-include="#page-{{ page }}"><input id="page-{{ page }}" name="page" value="{{ page }}" style="display: none"></form>
