@@ -12,6 +12,7 @@
             </div>
             <div id="edit_{{ comment.id }}" class="edit-comment col" style="display:none;">
                 <form method="POST" action="/edit_comment">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                     <input name="edited_comment" value="{{ comment.content }}" class="form-control"><br>
                     <button type="submit" name="id" value="{{ comment.id }}" class="btn btn-primary">Düzenle</button>
                 </form>
@@ -22,6 +23,7 @@
                     <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown"></button>
                     <ul class="dropdown-menu">
                         <form method="POST" action="/delete_comment">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                             <li><button type="submit" name="delete_comment" value="{{ comment.id }}" class="dropdown-item">Sil</button></li>
                         </form>
                         <li><button type="button" id="edit_comment" class="toggle-edit-button dropdown-item" data-target="#edit_{{ comment.id }}" data-content-target="#content_{{ comment.id }}">Düzenle</button></li>

@@ -3,6 +3,7 @@ import flask
 from flask import request
 import flask_sqlalchemy
 import flask_login
+from flask_wtf import CSRFProtect
 from werkzeug.security import generate_password_hash, check_password_hash
 from utils import check_password, process_content, get_tag_list, search_parser
 
@@ -14,8 +15,8 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = flask_sqlalchemy.SQLAlchemy(app)
 
-login_manager = flask_login.LoginManager()
-login_manager.init_app(app)
+login_manager = flask_login.LoginManager(app)
+csrf = CSRFProtect(app)
 
 moderators = [1]
 

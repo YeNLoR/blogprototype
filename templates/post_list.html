@@ -22,6 +22,7 @@
                 <ul class="dropdown-menu">
                 <li>
                     <form method="POST" action="/delete_post">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                         <button type="submit" name="delete_post" value="{{ post.id }}" class="dropdown-item">Sil</button>
                     </form>
                 </li>

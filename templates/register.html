@@ -2,6 +2,7 @@
 {% block body %}
 <div class="container">
     <form method="POST" action="/register">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
         <label for="username">Kullanıcı adı:</label><br>
         <input type="text" id="username" name="username" class="form-control"><br>
 
