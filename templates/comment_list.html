@@ -3,7 +3,7 @@
     <div class="list-group-item">
         <div class="row">
             <div>
-                <small>Kullanıcı: </small><a href="/profile/{{ comment.author.id }}">{{ comment.author.username }}</a><br>
+                <small><img src="/{{ comment.author.profile_pic_path }}" STYLE="width:30px;height:30px;"> </small><a href="/profile/{{ comment.author.id }}">{{ comment.author.username }}</a><br>
             </div>
         </div>
         <div class="row">

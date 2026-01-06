@@ -1,6 +1,9 @@
 import re
 import markdown
 import bleach
+import os
+
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
 def search_parser(search_string):
     search_dict = {}
@@ -52,3 +55,7 @@ def process_content(content):
         strip=True
     )
     return safe_content
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS

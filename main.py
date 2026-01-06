@@ -1,14 +1,21 @@
 import datetime
+import os
+
 import flask
 from flask import request
 import flask_sqlalchemy
 import flask_login
 from flask_wtf import CSRFProtect
+from sqlalchemy.sql.functions import current_user
 from werkzeug.security import generate_password_hash, check_password_hash
-from utils import check_password, process_content, get_tag_list, search_parser
+from werkzeug.utils import secure_filename
+
+from utils import check_password, process_content, get_tag_list, search_parser, allowed_file
+
+UPLOAD_FOLDER = 'static/content/user'
 
 app = flask.Flask(__name__)
-
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['SECRET_KEY'] = 'LFFV3RFHLDl'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -20,10 +27,12 @@ csrf = CSRFProtect(app)
 
 moderators = [1]
 
+
 class Users(db.Model, flask_login.UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(16), nullable=False)
     password = db.Column(db.String, nullable=False)
+    profile_pic_path = db.Column(db.String, default="/static/content/profile_picture/img.png", nullable=False)
     register_date = db.Column(db.DateTime, nullable=False)
     posts = db.relationship('Posts', backref='author', lazy='dynamic')
     comments = db.relationship('Comments', backref='author', lazy='dynamic')
@@ -71,13 +80,20 @@ def index():
 
 @app.route('/feed')
 def feed():
-    page = int(request.args.get("page"))
-    latest_posts = db.session.query(Posts).order_by(Posts.date_posted.desc()).offset((page-1)*24).limit(24).all()
+    # type=int sayesinde boş metin ("") gelse bile hata almazsınız, 1 döner.
+    page = request.args.get("page", 1, type=int)
+
+    # Eğer bir şekilde 1'den küçük değer gelirse (örneğin 0), sayfalama bozulmaması için:
+    if page < 1:
+        page = 1
+
+    latest_posts = db.session.query(Posts).order_by(Posts.date_posted.desc()).offset((page - 1) * 24).limit(24).all()
+
     if latest_posts:
         return flask.render_template('post_list.html',
-                                 TITLE="Benim Ultra Mega Güzel Blog Prototipim",
-                                 page=page+1,
-                                 posts=latest_posts)
+                                     TITLE="Benim Ultra Mega Güzel Blog Prototipim",
+                                     page=page + 1,
+                                     posts=latest_posts)
     else:
         return 'post yok'
 
@@ -156,6 +172,25 @@ def show_profile(profile_id):
                                 TITLE="Profil",
                                 user=user,
                                 posts=posts_from_user)
+
+@app.route('/profilepicture', methods=['GET', 'POST'])
+@flask_login.login_required
+def profile_picture():
+    if request.method == 'POST':
+        if 'file' not in request.files:
+            flask.flash('No file part')
+            return flask.redirect(request.url)
+        file = request.files['file']
+        if file.filename == '':
+            flask.flash('No selected file')
+            return flask.redirect(request.url)
+        if file and allowed_file(file.filename):
+            filename = str(flask_login.current_user.id) + '.jpg'
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            user = db.session.get(Users, flask_login.current_user.id)
+            user.profile_pic_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            db.session.commit()
+    return ""
 
 @app.route('/post', methods=['GET','POST'])
 @flask_login.login_required
