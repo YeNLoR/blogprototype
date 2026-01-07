@@ -14,6 +14,25 @@
 <main>
     {% block body %}
     {% endblock %}
+    <div class="row position-fixed bottom-0">
+        <div class="col-auto">
+            <div id="status" class="list-group">
+                <script>
+                    document.addEventListener('DOMContentLoaded', () => {
+                        const statusContainer = document.getElementById('status');
+
+                        document.addEventListener('status-report', (event) => {
+                            const content = event.detail.content;
+
+                            if (content) {
+                                statusContainer.insertAdjacentHTML('beforeend', content);
+                            }
+                        });
+                    });
+                </script>
+            </div>
+        </div>
+    </div>
 </main>
 <footer>
 </footer>

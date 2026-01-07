@@ -1,5 +1,6 @@
 import datetime
 import os
+import json
 from flask import Flask, request, render_template, url_for, redirect
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, current_user, login_user, logout_user, login_required
@@ -64,6 +65,17 @@ def load_user(user_id):
 @app.context_processor
 def inject_user_status():
     return dict(logged_in=current_user.is_authenticated)
+
+def trigger_status(message, response=None, status_code=None, Header=None):
+    status_html = render_template("status.html", message=message)
+    if status_code is None:
+        status_code = 200 if response else 204
+    content = response if response else ''
+    return content, status_code, {
+        "HX-Trigger": json.dumps({
+            "statusReport": {"content": status_html}
+        })
+    }
 
 @app.route('/')
 def index():
@@ -177,6 +189,7 @@ def profile_picture():
             user = db.session.get(Users, current_user.id)
             user.profile_pic_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             db.session.commit()
+            return trigger_status("profil resmin değiştirildi")
     return ""
 
 @app.route('/post', methods=['GET','POST'])
