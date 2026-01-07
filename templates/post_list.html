@@ -21,8 +21,8 @@
                 </button>
                 <ul class="dropdown-menu">
                 <li>
-                    <form method="POST" action="/delete_post">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <form hx-post="/delete_post"
+                          hx-on::after-request="htmx.ajax('GET', '/feed', {target: '#post-view', swap: 'innerHTML'});">
                         <button type="submit" name="delete_post" value="{{ post.id }}" class="dropdown-item">Sil</button>
                     </form>
                 </li>
@@ -36,4 +36,10 @@
     </div>
 {% endfor %}
 </div>
-<form hx-get="/feed" hx-trigger="intersect once" hx-swap="afterend" hx-include="#page-{{ page }}"><input id="page-{{ page }}" name="page" value="{{ page }}" style="display: none"></form>
+{% set page = page | default(1) %}
+{% set from_user = from_user | default(params.get('from_user', '')) %}
+<form hx-get="/feed" hx-trigger="intersect once" hx-swap="afterend">
+    <input type="hidden" name="page" value="{{ page }}">
+    <input type="hidden" name="from_user" value="{{ from_user }}">
+
+</form>

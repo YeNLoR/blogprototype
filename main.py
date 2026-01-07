@@ -64,7 +64,7 @@ def load_user(user_id):
 
 @app.context_processor
 def inject_user_status():
-    return dict(logged_in=current_user.is_authenticated)
+    return dict(logged_in=current_user.is_authenticated, params=request.args)
 
 def trigger_status(message, response=None, status_code=None, Header=None):
     status_html = render_template("status.html", message=message)
@@ -88,12 +88,18 @@ def index():
 @app.route('/feed')
 def feed():
     page = int(request.args.get("page",1))
-    latest_posts = db.session.query(Posts).order_by(Posts.date_posted.desc()).offset((page-1)*24).limit(24).all()
-    if latest_posts:
+    if request.args.get("from_user"):
+        user_id = request.args.get("from_user")
+        user = db.session.get(Users, user_id)
+        posts = user.posts.all()
+    else:
+        posts = db.session.query(Posts)
+    posts = posts.order_by(Posts.date_posted.desc()).offset((page-1)*24).limit(24).all()
+    if posts:
         return render_template('post_list.html',
                                      TITLE="Benim Ultra Mega Güzel Blog Prototipim",
                                      page=page + 1,
-                                     posts=latest_posts)
+                                     posts=posts)
     else:
         return 'post yok'
 
@@ -160,6 +166,7 @@ def profile():
     return render_template('profile.html',
                                  TITLE="Profil",
                                  user=current_user,
+                                 from_user = current_user.id,
                                  posts=Posts.query.filter_by(author_id=current_user.id).order_by(Posts.date_posted.desc()).all(),
                                  admin=True,
                                  page=1
@@ -172,6 +179,7 @@ def show_profile(profile_id):
     return render_template('profile.html',
                                 TITLE="Profil",
                                 user=user,
+                                from_user=profile_id,
                                 posts=posts_from_user)
 
 @app.route('/profilepicture', methods=['GET', 'POST'])
@@ -317,8 +325,8 @@ def delete_post():
         post_to_delete.comments.delete(synchronize_session='fetch')
         db.session.delete(post_to_delete)
         db.session.commit()
-        return redirect(url_for('index'))
-    return f"Diğer kullanıcıların paylaşımlarını silme yetkin yok. <a href='{request.referrer}'>Geri git</a>"
+        return trigger_status("Post başarı ile silindi")
+    return trigger_status("Diğer kullanıcıların paylaşımlarını silme yetkin yok.")
 
 @app.route("/delete_user", methods=['POST'])
 @login_required
