@@ -1,34 +1,29 @@
 import datetime
 import os
-
-import flask
-from flask import request
-import flask_sqlalchemy
-import flask_login
+from flask import Flask, request, render_template, url_for, redirect
+from flask_sqlalchemy import SQLAlchemy
+from flask_login import LoginManager, UserMixin, current_user, login_user, logout_user, login_required
 from flask_wtf import CSRFProtect
-from sqlalchemy.sql.functions import current_user
 from werkzeug.security import generate_password_hash, check_password_hash
-from werkzeug.utils import secure_filename
-
 from utils import check_password, process_content, get_tag_list, search_parser, allowed_file
 
 UPLOAD_FOLDER = 'static/content/user'
 
-app = flask.Flask(__name__)
+app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['SECRET_KEY'] = 'LFFV3RFHLDl'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-db = flask_sqlalchemy.SQLAlchemy(app)
+db = SQLAlchemy(app)
 
-login_manager = flask_login.LoginManager(app)
+login_manager = LoginManager(app)
 csrf = CSRFProtect(app)
 
 moderators = [1]
 
 
-class Users(db.Model, flask_login.UserMixin):
+class Users(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(16), nullable=False)
     password = db.Column(db.String, nullable=False)
@@ -68,29 +63,22 @@ def load_user(user_id):
 
 @app.context_processor
 def inject_user_status():
-    return dict(logged_in=flask_login.current_user.is_authenticated)
+    return dict(logged_in=current_user.is_authenticated)
 
 @app.route('/')
 def index():
     latest_posts = db.session.query(Posts).order_by(Posts.date_posted.desc()).limit(24).all()
-    return flask.render_template('index.html',
+    return render_template('index.html',
                                  TITLE = "Benim Ultra Mega Güzel Blog Prototipim",
                                  page=2,
                                  posts=latest_posts)
 
 @app.route('/feed')
 def feed():
-    # type=int sayesinde boş metin ("") gelse bile hata almazsınız, 1 döner.
-    page = request.args.get("page", 1, type=int)
-
-    # Eğer bir şekilde 1'den küçük değer gelirse (örneğin 0), sayfalama bozulmaması için:
-    if page < 1:
-        page = 1
-
-    latest_posts = db.session.query(Posts).order_by(Posts.date_posted.desc()).offset((page - 1) * 24).limit(24).all()
-
+    page = int(request.args.get("page",1))
+    latest_posts = db.session.query(Posts).order_by(Posts.date_posted.desc()).offset((page-1)*24).limit(24).all()
     if latest_posts:
-        return flask.render_template('post_list.html',
+        return render_template('post_list.html',
                                      TITLE="Benim Ultra Mega Güzel Blog Prototipim",
                                      page=page + 1,
                                      posts=latest_posts)
@@ -104,18 +92,18 @@ def login():
         password = request.form['password']
         user = db.session.query(Users).filter_by(username=username).first()
         if user and check_password_hash(user.password, password):
-            flask_login.login_user(user, remember=True)
-            return flask.redirect(flask.url_for('profile'))
+            login_user(user, remember=True)
+            return redirect(url_for('profile'))
         else:
             return f"Yanlış kullanıcı adı yada şifre. <a href='{request.referrer}'>Geri git</a>"
 
-    return flask.render_template('login.html',
+    return render_template('login.html',
                                  TITLE='Giriş yap')
 
 @app.route('/logout')
 def logout():
-    flask_login.logout_user()
-    return flask.redirect(flask.url_for('index'))
+    logout_user()
+    return redirect(url_for('index'))
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -130,18 +118,18 @@ def register():
             u.register_date = datetime.datetime.now()
             db.session.add(u)
             db.session.commit()
-            return flask.redirect(flask.url_for('login'))
+            return redirect(url_for('login'))
         else:
             return f"Şifre en az 8 en fazla 16 karakter içermelidir ve A-Z, a-z, 0-9, _, - harici karakterler kullanılmamalıdır. <a href='{request.referrer}'>Geri git</a>"
-    return flask.render_template('register.html',
+    return render_template('register.html',
                                  TITLE='Kayıt ol')
 
 @app.route('/profile', methods=['GET', 'POST'])
-@flask_login.login_required
+@login_required
 def profile():
     if "new_username" in request.form:
         new_username = request.form['new_username']
-        user = db.session.query(Users).filter_by(id=flask_login.current_user.id).first()
+        user = db.session.query(Users).filter_by(id=current_user.id).first()
         user.username = new_username
         db.session.add(user)
         db.session.commit()
@@ -149,7 +137,7 @@ def profile():
     if "new_password" in request.form:
         new_password = request.form['new_password']
         password = request.form['password']
-        user = db.session.query(Users).filter_by(id=flask_login.current_user.id).first()
+        user = db.session.query(Users).filter_by(id=current_user.id).first()
         if check_password_hash(user.password, password) and check_password(new_password):
             user.password = generate_password_hash(new_password)
             db.session.add(user)
@@ -157,43 +145,42 @@ def profile():
         else:
             return f"Şifre en az 8 en fazla 16 karakter içermelidir ve A-Z, a-z, 0-9, _, - harici karakterler kullanılmamalıdır  <a href='{request.referrer}'>Geri git</a>"
 
-    return flask.render_template('profile.html',
+    return render_template('profile.html',
                                  TITLE="Profil",
-                                 user=flask_login.current_user,
-                                 posts=Posts.query.filter_by(author_id=flask_login.current_user.id).order_by(Posts.date_posted.desc()).all(),
-                                 admin=True
+                                 user=current_user,
+                                 posts=Posts.query.filter_by(author_id=current_user.id).order_by(Posts.date_posted.desc()).all(),
+                                 admin=True,
+                                 page=1
     )
 
 @app.route('/profile/<profile_id>', methods=['GET','POST'])
 def show_profile(profile_id):
     user = db.session.query(Users).filter_by(id=profile_id).first()
     posts_from_user = db.session.query(Posts).filter_by(author_id=user.id).all()
-    return flask.render_template('profile.html',
+    return render_template('profile.html',
                                 TITLE="Profil",
                                 user=user,
                                 posts=posts_from_user)
 
 @app.route('/profilepicture', methods=['GET', 'POST'])
-@flask_login.login_required
+@login_required
 def profile_picture():
     if request.method == 'POST':
         if 'file' not in request.files:
-            flask.flash('No file part')
-            return flask.redirect(request.url)
+            return redirect(request.url)
         file = request.files['file']
         if file.filename == '':
-            flask.flash('No selected file')
-            return flask.redirect(request.url)
+            return redirect(request.url)
         if file and allowed_file(file.filename):
-            filename = str(flask_login.current_user.id) + '.jpg'
+            filename = str(current_user.id) + '.jpg'
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            user = db.session.get(Users, flask_login.current_user.id)
+            user = db.session.get(Users, current_user.id)
             user.profile_pic_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             db.session.commit()
     return ""
 
 @app.route('/post', methods=['GET','POST'])
-@flask_login.login_required
+@login_required
 def post():
     if request.method == 'POST' and "submit" in request.form:
         title = request.form['title']
@@ -205,26 +192,26 @@ def post():
             new_post.title = title
             new_post.content = final_content
             new_post.date_posted = datetime.datetime.now()
-            new_post.author_id = flask_login.current_user.id
+            new_post.author_id = current_user.id
             for tag in tags:
                 if not db.session.query(Tags).filter_by(name=tag).all():
                     db.session.add(Tags(name=str(tag)))
                 new_post.tags.append(db.session.query(Tags).filter_by(name=str(tag)).first())
             db.session.add(new_post)
             db.session.commit()
-            return flask.redirect(flask.url_for('index'))
+            return redirect(url_for('index'))
 
-    return flask.render_template('post.html',
+    return render_template('post.html',
                                  TITLE = 'Post Oluştur')
 
 @app.route('/post/<post_id>', methods=['GET','POST'])
 def show_post(post_id):
     check_post = db.session.query(Posts).filter_by(id=post_id).first()
     if check_post is None:
-        flask.abort(404)
+        return redirect(request.referrer)
     if request.method == 'POST':
         comment = request.form['comment']
-        author_id = flask_login.current_user.id
+        author_id = current_user.id
         new_comment = Comments()
         new_comment.author_id = author_id
         new_comment.post_id = post_id
@@ -232,14 +219,14 @@ def show_post(post_id):
         new_comment.date_posted = datetime.datetime.now()
         db.session.add(new_comment)
         db.session.commit()
-        return flask.redirect(request.referrer)
+        return redirect(request.referrer)
     else:
-        return flask.render_template('show_post.html',
+        return render_template('show_post.html',
                                      post=check_post,
                                      comments=check_post.comments)
 
 @app.route("/edit/<post_id>", methods=['GET','POST'])
-@flask_login.login_required
+@login_required
 def edit_post(post_id):
     check_post = db.session.query(Posts).filter_by(id=post_id).first()
     old_tags = {
@@ -264,23 +251,23 @@ def edit_post(post_id):
                 check_post.tags.append(db.session.query(Tags).filter_by(name=str(tag)).first())
 
             db.session.commit()
-    return flask.render_template('edit.html',
+    return render_template('edit.html',
                                  post=check_post,
                                  tags=tag_string)
 
 @app.route("/edit_comment" , methods=['GET','POST'])
-@flask_login.login_required
+@login_required
 def edit_comment():
     if request.method == 'POST':
         id = request.form['id']
         content = request.form['edited_comment']
-        current_user_id = flask_login.current_user.id
+        current_user_id = current_user.id
         comment = db.session.query(Comments).filter_by(id=id).first()
         if comment.author_id == current_user_id:
             comment.content = content
             comment.date_posted = datetime.datetime.now()
             db.session.commit()
-            return flask.redirect(request.referrer)
+            return redirect(request.referrer)
 
 @app.route('/search', methods=['GET', 'POST'])
 def search():
@@ -299,47 +286,47 @@ def search():
                 posts = posts.filter(Posts.title.contains(post_string))
             if tag_string and tag_string != '':
                 posts = posts.filter(Posts.tags.any(Tags.name.contains(tag_string)))
-        return  flask.render_template('post_list.html',
+        return  render_template('post_list.html',
                                       posts=posts)
-    return f"Hata <a href='{flask.url_for('index')}'>Ana sayfaya dön.</a>"
+    return f"Hata <a href='{url_for('index')}'>Ana sayfaya dön.</a>"
 
 @app.route("/delete_post", methods=['POST'])
-@flask_login.login_required
+@login_required
 def delete_post():
     post_to_delete = {}
     moderator = False
     if request.form["delete_post"]:
         post_id = int(request.form["delete_post"])
         post_to_delete = db.session.query(Posts).filter_by(id=post_id).first()
-    if flask_login.current_user.id in moderators:
+    if current_user.id in moderators:
         moderator = True
-    if moderator or post_to_delete.author_id == flask_login.current_user.id:
+    if moderator or post_to_delete.author_id == current_user.id:
         post_to_delete.comments.delete(synchronize_session='fetch')
         db.session.delete(post_to_delete)
         db.session.commit()
-        return flask.redirect(flask.url_for('index'))
+        return redirect(url_for('index'))
     return f"Diğer kullanıcıların paylaşımlarını silme yetkin yok. <a href='{request.referrer}'>Geri git</a>"
 
 @app.route("/delete_user", methods=['POST'])
-@flask_login.login_required
+@login_required
 def delete_user():
     user = {}
     moderator = False
     if request.form["delete_user"]:
         user_id = int(request.form["delete_user"])
         user = db.session.query(Users).filter_by(id=user_id).first()
-    if flask_login.current_user.id in moderators:
+    if current_user.id in moderators:
         moderator = True
-    if moderator or flask_login.current_user.id == user.id:
+    if moderator or current_user.id == user.id:
         user.comments.delete(synchronize_session='fetch')
         user.posts.delete(synchronize_session='fetch')
         db.session.delete(user)
         db.session.commit()
-        return flask.redirect(request.referrer)
+        return redirect(request.referrer)
     return f"Diğer kullanıcıların hesaplarını silme yetkin yok. <a href='{request.referrer}'>Geri git</a>"
 
 @app.route("/delete_comment", methods=['POST'])
-@flask_login.login_required
+@login_required
 def delete_comment():
     comment_to_delete = {}
     moderator = False
@@ -348,12 +335,12 @@ def delete_comment():
         comment_id = int(request.form["delete_comment"])
         comment_to_delete = db.session.query(Comments).filter_by(id=comment_id).first()
         print(comment_to_delete)
-    if flask_login.current_user.id in moderators:
+    if current_user.id in moderators:
         moderator = True
-    if moderator or comment_to_delete.author_id == flask_login.current_user.id:
+    if moderator or comment_to_delete.author_id == current_user.id:
         db.session.delete(comment_to_delete)
         db.session.commit()
-        return flask.redirect(request.referrer)
+        return redirect(request.referrer)
     return f"Diğer kullanıcıların yorumlarını silme yetkin yok. <a href='{request.referrer}'>Geri git</a>"
 
 
