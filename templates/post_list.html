@@ -1,4 +1,3 @@
-<div id="list" class="list-group">
 {% for post in posts %}
     <div class="list-group-item">
         <div class="row">
@@ -22,7 +21,10 @@
                 <ul class="dropdown-menu">
                 <li>
                     <form hx-post="/delete_post"
-                          hx-on::after-request="htmx.ajax('GET', '/feed', {target: '#post-view', swap: 'innerHTML'});">
+                          hx-on::after-request="htmx.ajax('GET', '/feed', {target: '#post-list', swap: 'innerHTML',
+                          values: {
+                            from_user: document.querySelector('#post-list').dataset.fromUser,
+                          }});">
                         <button type="submit" name="delete_post" value="{{ post.id }}" class="dropdown-item">Sil</button>
                     </form>
                 </li>
@@ -35,11 +37,4 @@
         </div>
     </div>
 {% endfor %}
-</div>
-{% set page = page | default(1) %}
-{% set from_user = from_user | default(params.get('from_user', '')) %}
-<form hx-get="/feed" hx-trigger="intersect once" hx-swap="afterend">
-    <input type="hidden" name="page" value="{{ page }}">
-    <input type="hidden" name="from_user" value="{{ from_user }}">
-
-</form>
+{% include "post_list_scroll.html" %}

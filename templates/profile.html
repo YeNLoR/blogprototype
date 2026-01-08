@@ -23,21 +23,23 @@
         <li><input type="text" id="new_password" name="new_password" class="dropdown-item; form-control" ></input></li>
         <li><button type="submit" class="dropdown-item; btn btn-outline-dark">Şifre Değiştir</button></li>
     </form>
-    <li><h5 class="dropdown-header">kullanıcı silme</h5></li>
+    <li><h5 class="dropdown-header">Kullanıcı silme</h5></li>
     <form method="POST" action="/delete_user">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
         <li><button type="submit" name="delete_user" value="{{ user.id }}" class="dropdown-item; btn btn-outline-dark">Sil</button></li>
     </form>
-    <li><h5 class="dropdown-header">profil fotografı değişttirme</h5></li>
+    <li><h5 class="dropdown-header">Profil fotografı değişttirme</h5></li>
     <form hx-post="/profilepicture" hx-encoding="multipart/form-data">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-        <li><input type="file" name="file" accept="image/png, image/jpeg"/></li>
-        <li><button type="submit"></button></li>
+        <li><input type="file" name="file" accept="image/png, image/jpeg" class="form-control"/></li>
+        <li><button type="submit" class="dropdown-item; btn btn-outline-dark">Değiştir</button></li>
     </form>
     </ul>
 </div>
     <div id="post-view">
-        {% include 'post_list.html' %}
+        <div id="post-list" class="list-group" data-from-user="{{ from_user }}">
+            {% include "post_list_scroll.html" %}
+        </div>
     </div>
 </div>
 {% endblock %}

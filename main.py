@@ -88,16 +88,32 @@ def index():
 @app.route('/feed')
 def feed():
     page = int(request.args.get("page",1))
+    posts = db.session.query(Posts)
     if request.args.get("from_user"):
         user_id = request.args.get("from_user")
         user = db.session.get(Users, user_id)
-        posts = user.posts.all()
-    else:
+        posts = user.posts
+    ##
+    if request.args.get("search",""):
+        search_dict = search_parser(request.args.get('search',""))
+        user_string = search_dict.get('user', "")
+        post_string = search_dict.get('post', "")
+        tag_string = search_dict.get('tags', "")
         posts = db.session.query(Posts)
+        if not user_string and not post_string and not tag_string:
+            posts = posts.filter(Posts.title.contains(request.args.get('search')))
+        else:
+            if user_string and user_string != '':
+                posts = posts.join(Posts.author).filter(Users.username.contains(user_string))
+            if post_string and post_string != '':
+                posts = posts.filter(Posts.title.contains(post_string))
+            if tag_string and tag_string != '':
+                posts = posts.filter(Posts.tags.any(Tags.name.contains(tag_string)))
+    ##
     posts = posts.order_by(Posts.date_posted.desc()).offset((page-1)*24).limit(24).all()
     if posts:
         return render_template('post_list.html',
-                                     TITLE="Benim Ultra Mega Güzel Blog Prototipim",
+                                     TITLE="Mert'in blog sitesi",
                                      page=page + 1,
                                      posts=posts)
     else:
