@@ -303,27 +303,6 @@ def edit_comment():
             db.session.commit()
             return redirect(request.referrer)
 
-@app.route('/search', methods=['GET', 'POST'])
-def search():
-    if request.method == 'POST':
-        search_dict = search_parser(request.form['search'])
-        user_string = search_dict.get('user', None)
-        post_string = search_dict.get('post', None)
-        tag_string = search_dict.get('tags', None)
-        posts = db.session.query(Posts)
-        if user_string == None and post_string == None and tag_string == None:
-            posts = posts.filter(Posts.title.contains(request.form['search'])).all()
-        else:
-            if user_string and user_string != '':
-                posts = posts.join(Posts.author).filter(Users.username.contains(user_string)).all()
-            if post_string and post_string != '':
-                posts = posts.filter(Posts.title.contains(post_string))
-            if tag_string and tag_string != '':
-                posts = posts.filter(Posts.tags.any(Tags.name.contains(tag_string)))
-        return  render_template('post_list.html',
-                                      posts=posts)
-    return f"Hata <a href='{url_for('index')}'>Ana sayfaya dön.</a>"
-
 @app.route("/delete_post", methods=['POST'])
 @login_required
 def delete_post():
@@ -382,11 +361,4 @@ with app.app_context():
     db.create_all()
 
 if __name__ == '__main__':
-    if not db.session.query(Users).filter(Users.username == 'admin').first():
-        mod = Users()
-        mod.username = "admin"
-        mod.password = generate_password_hash("admin")
-        mod.register_date = datetime.datetime.now()
-        db.session.add(mod)
-        db.session.commit()
     app.run(host="0.0.0.0", debug=True)

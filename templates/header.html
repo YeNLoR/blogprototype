@@ -28,7 +28,9 @@
         </li>
         {% endif %}
       </ul>
-      <form hx-post="/search" hx-target="#list" class="d-flex">
+      <form hx-get="/feed" hx-target="#post-list" class="d-flex">
+        <input type="hidden" name="page" value="1">
+        <input type="hidden" name="from_user" value="{{ params.get('from_user', '') }}">
         <input name="search" id="search" type="text" placeholder="Arama" class="form-control me-2" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Örnek: user:kullanıcıadı,post:başlık,tags:etiket">
         <button type="submit" class="btn btn-primary" >Arama</button>
       </form>
