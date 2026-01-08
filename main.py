@@ -17,12 +17,9 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
-
 login_manager = LoginManager(app)
 csrf = CSRFProtect(app)
-
-moderators = [1]
-
+moderators = []
 
 class Users(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
@@ -81,7 +78,7 @@ def trigger_status(message, response=None, status_code=None, Header=None):
 def index():
     latest_posts = db.session.query(Posts).order_by(Posts.date_posted.desc()).limit(24).all()
     return render_template('index.html',
-                                 TITLE = "Benim Ultra Mega Güzel Blog Prototipim",
+                                 TITLE = "Mert'in blog sitesi",
                                  page=2,
                                  posts=latest_posts)
 
@@ -381,15 +378,15 @@ def delete_comment():
     return f"Diğer kullanıcıların yorumlarını silme yetkin yok. <a href='{request.referrer}'>Geri git</a>"
 
 
+with app.app_context():
+    db.create_all()
 
 if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
-        if not db.session.query(Users).filter(Users.username == 'admin').first():
-            mod = Users()
-            mod.username = "admin"
-            mod.password = generate_password_hash("admin")
-            mod.register_date = datetime.datetime.now()
-            db.session.add(mod)
-            db.session.commit()
+    if not db.session.query(Users).filter(Users.username == 'admin').first():
+        mod = Users()
+        mod.username = "admin"
+        mod.password = generate_password_hash("admin")
+        mod.register_date = datetime.datetime.now()
+        db.session.add(mod)
+        db.session.commit()
     app.run(host="0.0.0.0", debug=True)
